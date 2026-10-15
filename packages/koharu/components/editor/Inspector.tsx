@@ -876,7 +876,13 @@ function LayerRow({
   const Icon = layerIcon(layer)
 
   // `index` names the layer; the sortable index is the row's position in the list.
-  const { ref: sortableRef, isDragging } = useSortable({
+  // Only the row header drags, so the expanded editor's controls (opacity slider,
+  // inputs) keep their own pointer gestures.
+  const {
+    ref: sortableRef,
+    handleRef,
+    isDragging,
+  } = useSortable({
     id: layer.id,
     index: row,
     disabled: locked || reordering,
@@ -907,6 +913,7 @@ function LayerRow({
       >
         <div className='relative flex min-w-0 items-center gap-0.5'>
           <div
+            ref={handleRef}
             role='button'
             tabIndex={locked ? undefined : 0}
             aria-label={t('layers.edit', { name })}
@@ -1060,10 +1067,7 @@ function LayerEditor({ layer, onDelete }: { layer: Layer; onDelete?: () => void 
   }
 
   return (
-    <div
-      onPointerDown={(e) => e.stopPropagation()}
-      className='grid min-w-0 gap-1.5 px-1.5 pt-0.5 pb-1.5'
-    >
+    <div className='grid min-w-0 gap-1.5 px-1.5 pt-0.5 pb-1.5'>
       <div className='flex min-w-0 items-center gap-1.5'>
         <span className='shrink-0 text-[8px] font-medium text-muted-foreground uppercase'>
           {t('inspector.opacity')}
