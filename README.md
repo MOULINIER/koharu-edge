@@ -1,17 +1,14 @@
-<h1 align="center">Koharu</h1>
+<h1 align="center">Koharu (fork)</h1>
 
 <p align="center">ML-powered manga translator, written in <b>Rust</b>.</p>
 
 <p align="center">
-<a href="https://github.com/koharu-rs/koharu/releases/latest" target="_blank"><img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/koharu-rs/koharu/total?style=for-the-badge&link=https%3A%2F%2Fgithub.com%2Fkoharu-rs%2Fkoharu%2Freleases%2Flatest"></a>
+A personal fork of <a href="https://github.com/koharu-rs/koharu"><b>koharu-rs/koharu</b></a> that carries extra fixes and features.<br>
+See <a href="#how-this-fork-differs">how this fork differs</a>.
 </p>
 
 <p align="center">
-<a href="https://trendshift.io/repositories/20649" target="_blank"><img src="https://trendshift.io/api/badge/repositories/20649" alt="koharu-rs%2Fkoharu | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-</p>
-
-<p align="center">
-<a href="https://koharu.rs/installation" target="_blank">Getting Started</a> · <a href="https://koharu.rs/" target="_blank">Docs</a> · <a href="https://github.com/koharu-rs/koharu/issues" target="_blank">Bug reports</a> · <a href="https://discord.gg/mHvHkxGnUY" target="_blank">Discord</a>
+<a href="https://github.com/koharu-rs/koharu" target="_blank">Upstream project</a> · <a href="https://koharu.rs/" target="_blank">Docs</a> · <a href="https://discord.gg/mHvHkxGnUY" target="_blank">Discord</a>
 </p>
 
 <p align="center">
@@ -27,23 +24,17 @@ Koharu introduces a local-first workflow for manga translation, utilizing the po
 
 ![screenshot](packages/docs/screenshot.png)
 
-> [!NOTE]
-> Join our [Discord server](https://discord.gg/mHvHkxGnUY) for support and discussion.
+## How this fork differs
 
-## About this fork
+This fork tracks upstream `main` and adds the changes below. Most of them come from upstream pull requests that are still waiting for review or were closed. Each one was reviewed, and fixed where needed, before it was merged here. When upstream ships its own version of a change, this fork switches to it.
 
-This is a personal fork of [koharu-rs/koharu](https://github.com/koharu-rs/koharu). It follows upstream `main` and adds fixes and features that are not, or not yet, in upstream, mostly pull requests that are still waiting for review or were closed there. Every adopted pull request is reviewed and often corrected before it lands here. Each one is a single commit, titled `(upstream #N)`. When upstream merges its own version, that version replaces ours.
+- **Cleaner text detection:** a paragraph detected both as one large box and as smaller boxes inside it now becomes a single text block, instead of overlapping duplicates. ([#1070](https://github.com/koharu-rs/koharu/pull/1070))
+- **Recent colors:** color pickers remember the last 8 colors you used. ([#989](https://github.com/koharu-rs/koharu/pull/989))
+- **Drag-and-drop layers:** reorder layers, or move them into groups, by dragging them in the layers panel. ([#959](https://github.com/koharu-rs/koharu/pull/959))
+- **OCR a single text frame:** each text layer has an OCR button, which also works on frames you drew yourself. Clearing a frame's source text lets OCR fill it again. ([#1065](https://github.com/koharu-rs/koharu/pull/1065))
+- **Consistent translations across pages:** **Settings → Translation → Context from previous pages** sends the translations of earlier pages along with each request, so names, terms and tone stay consistent. Off by default. (Part of [#1014](https://github.com/koharu-rs/koharu/pull/1014))
 
-| Change | Source | Notes |
-| --- | --- | --- |
-| Merge nested text detections into one paragraph | [#1070](https://github.com/koharu-rs/koharu/pull/1070) | As submitted |
-| Recent colors in the color picker | [#989](https://github.com/koharu-rs/koharu/pull/989) | The hex field no longer records partial input |
-| Drag and drop to reorder layers | [#959](https://github.com/koharu-rs/koharu/pull/959) | Fixed off-by-one root drops and shifting layer names |
-| OCR a single text frame, including hand-drawn frames | [#1065](https://github.com/koharu-rs/koharu/pull/1065) | Pipeline reworked: no double OCR, and frames moved after OCR are read at their new position |
-| Send earlier pages' translations as context | [#1014](https://github.com/koharu-rs/koharu/pull/1014) (part) | Only the previous-page hints, set in Settings → Translation (off by default). Page batching and prefix caching were not taken |
-| `bun dev` frees only port 3000 | Fork | `kill-port` also killed listeners on 30000+ on Windows |
-
-Bugs that come from the changes above belong here, not upstream.
+This fork has no prebuilt releases. To use it, build it from source (see [Development](#development)). For upstream releases, installation guides and support, see the [upstream project](https://github.com/koharu-rs/koharu). Before reporting a bug upstream, check that it also happens in upstream Koharu, since the changes above don't exist there.
 
 ## Features
 
@@ -152,6 +143,9 @@ Machine-translation providers: [DeepL](https://www.deepl.com/), [Google Cloud Tr
 OpenAI-compatible endpoints are also supported.
 
 ## Installation
+
+> [!IMPORTANT]
+> The release builds, WinGet and Homebrew below all install **upstream** Koharu, without this fork's changes. To get the fork, build it from source (see [Development](#development)).
 
 Download release builds from the [releases page](https://github.com/koharu-rs/koharu/releases/latest). [Installation requirements and first launch](https://koharu.rs/installation) vary by operating system.
 
