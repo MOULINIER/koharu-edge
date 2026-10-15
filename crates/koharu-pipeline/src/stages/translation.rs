@@ -1,13 +1,15 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use koharu_scene::{Authored, LanguageTag, Origin, SourceText, Translation};
-use koharu_translator::{TranslationRequest, Translator};
+use koharu_translator::{Language, TranslationContext, TranslationRequest, Translator};
 
 use crate::TranslationConfig;
 
 use super::{StageInput, StageProcessor, finish, generation};
 
 const PRODUCER: &str = "dev.koharu.pipeline.translation";
+/// Bounds the prompt growth from cross-page context.
+const MAX_CONTEXT_PAGES: u8 = 5;
 
 pub(super) struct Processor {
     config: TranslationConfig,
@@ -57,6 +59,14 @@ impl StageProcessor for Processor {
         if let Some(instructions) = self.config.instructions.as_deref() {
             request = request.with_instructions(instructions);
         }
+        let context = previous_translations(
+            &input,
+            self.config.context_pages,
+            self.config.target_language,
+        )?;
+        if !context.is_empty() {
+            request = request.with_context(context);
+        }
         if Translator::supports_vision(&self.config.model, &self.config.generation)
             && let Some(image) = input.images.get(&input.scene, input.page, "source").await?
         {
@@ -95,5 +105,145 @@ impl StageProcessor for Processor {
             )?;
         }
         finish(edit)
+    }
+}
+
+/// Translated text of the pages before this one, oldest first, so this page keeps the
+/// names, terms and voice they settled on. Only translations into the current target
+/// language qualify.
+fn previous_translations(
+    input: &StageInput,
+    pages: u8,
+    target: Language,
+) -> Result<Vec<TranslationContext>> {
+    let pages = usize::from(pages.min(MAX_CONTEXT_PAGES));
+    let order = input
+        .scene
+        .pages()
+        .map(|page| page.id())
+        .collect::<Vec<_>>();
+    let Some(index) = order.iter().position(|page| *page == input.page) else {
+        return Ok(Vec::new());
+    };
+    let mut context = Vec::new();
+    for page in &order[index.saturating_sub(pages)..index] {
+        let Some(group) = input.scene.page(*page)?.text_group()? else {
+            continue;
+        };
+        for layer in group.text_layers()? {
+            let content = layer.content()?;
+            let (Some(source), Some(translation)) = (content.source()?, content.translation()?)
+            else {
+                continue;
+            };
+            if translation
+                .language
+                .as_ref()
+                .is_none_or(|language| language.as_str() != target.tag())
+                || source.text.value.trim().is_empty()
+                || translation.text.value.trim().is_empty()
+            {
+                continue;
+            }
+            context.push(TranslationContext {
+                source: source.text.value,
+                translation: translation.text.value,
+            });
+        }
+    }
+    Ok(context)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use koharu_scene::{
+        At, Authored, EntityId, LanguageTag, PageDraft, Session, SourceText, TextLayout,
+        TextLayoutKind, Translation,
+    };
+    use koharu_translator::Language;
+
+    use super::{StageInput, previous_translations};
+    use crate::ImageCache;
+
+    #[tokio::test]
+    async fn context_comes_from_the_preceding_pages_in_the_target_language() {
+        let mut session = Session::memory().await.unwrap();
+        let mut pages = Vec::<EntityId>::new();
+        let patch = session
+            .snapshot()
+            .patch(|edit| {
+                for (index, texts) in [
+                    vec![("一", "one", "en-US")],
+                    vec![("二", "two", "en-US"), ("三", "trois", "fr-FR")],
+                    vec![("四", "four", "en-US")],
+                ]
+                .into_iter()
+                .enumerate()
+                {
+                    let page =
+                        edit.add_page(PageDraft::new(format!("page {index}"), 1.0, 1.0), At::End)?;
+                    for (source, translation, language) in texts {
+                        let content = edit.add_text_content(page, At::End)?;
+                        edit.set(
+                            content,
+                            &SourceText {
+                                text: Authored::user(source.to_owned()),
+                                language: None,
+                            },
+                        )?;
+                        edit.set(
+                            content,
+                            &Translation {
+                                text: Authored::user(translation.to_owned()),
+                                language: Some(LanguageTag::new(language)?),
+                            },
+                        )?;
+                        edit.add_text_layer(
+                            page,
+                            At::End,
+                            content,
+                            &TextLayout {
+                                origin: koharu_scene::Origin::User,
+                                kind: TextLayoutKind::Paragraph,
+                                angle_degrees: None,
+                            },
+                        )?;
+                    }
+                    pages.push(page);
+                }
+                Ok(())
+            })
+            .unwrap();
+        let snapshot = session.commit(patch).await.unwrap().snapshot;
+        let input = |page| {
+            StageInput::new(
+                snapshot.clone(),
+                page,
+                None,
+                None,
+                Arc::new(ImageCache::default()),
+                None,
+            )
+        };
+        let pairs = |page, count| {
+            previous_translations(&input(page), count, Language::English)
+                .unwrap()
+                .into_iter()
+                .map(|entry| (entry.source, entry.translation))
+                .collect::<Vec<_>>()
+        };
+
+        assert!(pairs(pages[2], 0).is_empty());
+        assert!(pairs(pages[0], 5).is_empty());
+        assert_eq!(pairs(pages[2], 1), [("二".to_owned(), "two".to_owned())]);
+        assert_eq!(
+            pairs(pages[2], u8::MAX),
+            [
+                ("一".to_owned(), "one".to_owned()),
+                ("二".to_owned(), "two".to_owned()),
+            ]
+        );
     }
 }

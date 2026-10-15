@@ -55,7 +55,6 @@ impl TranslationRequest {
         self
     }
 
-    #[cfg(test)]
     #[must_use]
     pub fn with_context(mut self, context: impl IntoIterator<Item = TranslationContext>) -> Self {
         self.context = context.into_iter().collect();

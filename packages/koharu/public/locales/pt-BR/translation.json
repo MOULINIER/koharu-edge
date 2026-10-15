@@ -438,6 +438,9 @@
     },
     "title": "Configurações",
     "translation": {
+      "contextPages": "Contexto das páginas anteriores",
+      "contextPagesDescription": "Envia as traduções de até este número de páginas anteriores, para manter nomes, termos e tom consistentes. 0 desativa.",
+      "contextPagesLabel": "Páginas",
       "description": "Escolha um modelo de qualquer provedor configurado e aplique um conjunto compartilhado de opções de tradução e geração.",
       "instructionsDescription": "Orientações de nomes, tom, terminologia ou formatação.",
       "instructionsLabel": "Instruções de tradução",

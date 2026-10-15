@@ -178,6 +178,10 @@ pub struct TranslationConfig {
     #[specta(type = String)]
     pub target_language: Language,
     pub instructions: Option<String>,
+    /// Preceding pages whose translations are sent as context, so names, terms and
+    /// voice carry across pages. Zero sends none.
+    #[serde(default)]
+    pub context_pages: u8,
 }
 
 impl Default for TranslationConfig {
@@ -187,6 +191,7 @@ impl Default for TranslationConfig {
             generation: GenerationConfig::default(),
             target_language: Language::English,
             instructions: None,
+            context_pages: 0,
         }
     }
 }

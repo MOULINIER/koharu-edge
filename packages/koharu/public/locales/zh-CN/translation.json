@@ -438,6 +438,9 @@
     },
     "title": "设置",
     "translation": {
+      "contextPages": "前几页的上下文",
+      "contextPagesDescription": "发送最多这么多前面页面的译文，使人名、术语和语气保持一致。0 表示关闭。",
+      "contextPagesLabel": "页数",
       "description": "选择任意已配置提供商的模型，然后应用一组共享的翻译和生成选项。",
       "instructionsDescription": "有关名称、语气、术语或格式的说明。",
       "instructionsLabel": "翻译说明",

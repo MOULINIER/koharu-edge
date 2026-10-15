@@ -503,6 +503,11 @@ export type TranslationConfig = {
 	generation: GenerationConfig,
 	target_language: string,
 	instructions: string | null,
+	/**
+	 *  Preceding pages whose translations are sent as context, so names, terms and
+	 *  voice carry across pages. Zero sends none.
+	 */
+	context_pages?: number,
 };
 
 export type TypesettingConfig = {

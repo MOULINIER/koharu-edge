@@ -438,6 +438,9 @@
     },
     "title": "설정",
     "translation": {
+      "contextPages": "이전 페이지 문맥",
+      "contextPagesDescription": "이전 페이지의 번역을 이 수만큼 함께 보내 이름, 용어, 말투를 일관되게 유지합니다. 0이면 사용하지 않습니다.",
+      "contextPagesLabel": "페이지 수",
       "description": "설정된 제공자의 모델을 선택하고 공통 번역 및 생성 옵션을 적용합니다.",
       "instructionsDescription": "이름, 어조, 용어 또는 서식 지침입니다.",
       "instructionsLabel": "번역 지침",

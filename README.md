@@ -40,6 +40,7 @@ This is a personal fork of [koharu-rs/koharu](https://github.com/koharu-rs/kohar
 | Recent colors in the color picker | [#989](https://github.com/koharu-rs/koharu/pull/989) | The hex field no longer records partial input |
 | Drag and drop to reorder layers | [#959](https://github.com/koharu-rs/koharu/pull/959) | Fixed off-by-one root drops and shifting layer names |
 | OCR a single text frame, including hand-drawn frames | [#1065](https://github.com/koharu-rs/koharu/pull/1065) | Pipeline reworked: no double OCR, and frames moved after OCR are read at their new position |
+| Send earlier pages' translations as context | [#1014](https://github.com/koharu-rs/koharu/pull/1014) (part) | Only the previous-page hints, set in Settings → Translation (off by default). Page batching and prefix caching were not taken |
 | `bun dev` frees only port 3000 | Fork | `kill-port` also killed listeners on 30000+ on Windows |
 
 Bugs that come from the changes above belong here, not upstream.

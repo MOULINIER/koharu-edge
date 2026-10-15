@@ -438,6 +438,9 @@
     },
     "title": "設定",
     "translation": {
+      "contextPages": "前のページの文脈",
+      "contextPagesDescription": "直前のページの翻訳をこの枚数まで送信し、名前・用語・口調を統一します。0 で無効になります。",
+      "contextPagesLabel": "ページ数",
       "description": "設定済みプロバイダーのモデルを選び、共通の翻訳・生成オプションを適用します。",
       "instructionsDescription": "名前、語調、用語、書式に関する指示です。",
       "instructionsLabel": "翻訳指示",

@@ -438,6 +438,9 @@
     },
     "title": "Ayarlar",
     "translation": {
+      "contextPages": "Önceki sayfalardan bağlam",
+      "contextPagesDescription": "Adların, terimlerin ve üslubun tutarlı kalması için en fazla bu kadar önceki sayfanın çevirisini gönderir. 0 kapatır.",
+      "contextPagesLabel": "Sayfa",
       "description": "Yapılandırılmış bir sağlayıcı modeli seçin ve ortak çeviri ile üretim seçeneklerini uygulayın.",
       "instructionsDescription": "Adlar, ton, terminoloji veya biçimlendirme yönergeleri.",
       "instructionsLabel": "Çeviri talimatları",
