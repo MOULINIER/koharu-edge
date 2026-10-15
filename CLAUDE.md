@@ -107,8 +107,7 @@ This repository is Koharu Edge, a fork of Koharu. `origin` is `MOULINIER/koharu-
 
   Settings, models, keychain and projects use hardcoded `koharu` paths, so they're shared with upstream Koharu on purpose.
 - **Releases:**
-  - `.github/workflows/edge-release.yml` builds from tags `vX.Y.Z-edge.N`, where `X.Y.Z` is the upstream workspace version. The version is set from the tag at build time, so never bump `[workspace.package].version` in the fork.
-  - `bun run edge:tag` creates the next tag locally. Pushing the tag (only when asked) publishes the release.
+  - `.github/workflows/edge-release.yml` is started by hand ("Run workflow" in the Actions tab, or `gh workflow run edge-release.yml -R MOULINIER/koharu-edge`, only when asked). It tags `main` with the next `vX.Y.Z-edge.N`, where `X.Y.Z` is the upstream workspace version, then builds and publishes the release. The version is set from the tag at build time, so never bump `[workspace.package].version` in the fork.
   - The updater signing key and its password are the repository secrets `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
   - Upstream's `release.yml`, `release-pr.yml` and `sponsors.yml` are deleted in the fork: they publish as upstream (WinGet, Release Please, SignPath, Sentry). When an upstream sync brings modify/delete conflicts on them, keep them deleted, and port any build fix they contain into `edge-release.yml`.
 

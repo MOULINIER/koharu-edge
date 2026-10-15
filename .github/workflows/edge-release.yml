@@ -1,15 +1,14 @@
 name: Edge Release
 
-# Koharu Edge releases. Upstream's release.yml publishes as upstream (WinGet, SignPath,
-# Apple notarization, Sentry), so the fork builds from its own tags instead:
-# `vX.Y.Z-edge.N`, where X.Y.Z is the upstream version the build is based on.
-# The version comes from the tag at build time, so the fork never edits the
-# workspace version and upstream version bumps merge cleanly.
+# Koharu Edge releases, started by hand from the Actions tab ("Run workflow").
+# Upstream's release.yml publishes as upstream (WinGet, SignPath, Apple notarization,
+# Sentry), so the fork tags and builds its own: `vX.Y.Z-edge.N`, where X.Y.Z is the
+# upstream workspace version and N counts Edge releases on it. The version comes from
+# the tag at build time, so the fork never edits the workspace version and upstream
+# version bumps merge cleanly.
 
 on:
-  push:
-    tags:
-      - 'v*-edge.*'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -17,8 +16,40 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
 
+concurrency:
+  group: edge-release
+  cancel-in-progress: false
+
 jobs:
+  tag:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.next.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Create the next edge tag
+        id: next
+        run: |
+          if git tag --points-at HEAD | grep -q -- '-edge\.'; then
+            echo "::error::main is already released as $(git tag --points-at HEAD | grep -- '-edge\.')"
+            exit 1
+          fi
+          version=$(grep -A5 '^\[workspace\.package\]' Cargo.toml | grep -m1 '^version' | cut -d'"' -f2)
+          last=$(git tag --list "v$version-edge.*" | sed "s/^v$version-edge\.//" | sort -n | tail -1)
+          tag="v$version-edge.$(( ${last:-0} + 1 ))"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "$tag" -m "Koharu Edge $tag"
+          git push origin "$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
   release:
+    needs: tag
     strategy:
       fail-fast: false
       matrix:
@@ -38,6 +69,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.tag.outputs.tag }}
           fetch-depth: 0
           fetch-tags: true
 
@@ -79,7 +111,7 @@ jobs:
         id: meta
         shell: bash
         env:
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ needs.tag.outputs.tag }}
         run: |
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
           base="${TAG#v}"
@@ -104,8 +136,8 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tauriScript: cargo tauri
-          tagName: ${{ github.ref_name }}
-          releaseName: Koharu Edge ${{ github.ref_name }}
+          tagName: ${{ needs.tag.outputs.tag }}
+          releaseName: Koharu Edge ${{ needs.tag.outputs.tag }}
           releaseBody: ${{ steps.meta.outputs.body }}
           releaseDraft: false
           prerelease: false

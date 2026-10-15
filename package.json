@@ -13,7 +13,6 @@
     "lint": "bun run --filter '@koharu/*' lint",
     "test": "bun run --filter @koharu/app test",
     "sponsors": "cd .github/sponsorkit && sponsorkit --force",
-    "edge:tag": "bun scripts/edge-tag.ts",
     "format": "oxfmt packages tests package.json .oxfmtrc.json .vscode",
     "check": "oxfmt --check packages tests package.json .oxfmtrc.json .vscode"
   },
