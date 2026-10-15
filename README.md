@@ -3,7 +3,7 @@
 <p align="center">ML-powered manga translator, written in <b>Rust</b>.</p>
 
 <p align="center">
-A fork of <a href="https://github.com/koharu-rs/koharu"><b>Koharu</b></a> with extra fixes and features, released separately.<br>
+My personal fork of <a href="https://github.com/koharu-rs/koharu"><b>Koharu</b></a>, with extra fixes and features.<br>
 See <a href="#how-this-fork-differs">how this fork differs</a>.
 </p>
 
@@ -14,6 +14,9 @@ See <a href="#how-this-fork-differs">how this fork differs</a>.
 <p align="center">
 <a href="https://koharu.rs/ja" target="_blank">日本語</a> | <a href="https://koharu.rs/zh" target="_blank">简体中文</a>
 </p>
+
+> [!WARNING]
+> Koharu Edge is a personal fork. It is built with more AI assistance than upstream Koharu and gets less testing, so expect it to break more often. For the stable app, use [upstream Koharu](https://github.com/koharu-rs/koharu).
 
 Koharu introduces a local-first workflow for manga translation, utilizing the power of ML to automate the process. It combines the capabilities of object detection, OCR, inpainting, and LLMs to create a seamless translation experience.
 
@@ -34,7 +37,7 @@ Koharu Edge tracks upstream Koharu's `main` branch and adds the changes below. M
 - **OCR a single text frame:** each text layer has an OCR button, which also works on frames you drew yourself. Clearing a frame's source text lets OCR fill it again. ([#1065](https://github.com/koharu-rs/koharu/pull/1065))
 - **Consistent translations across pages:** **Settings → Translation → Context from previous pages** sends the translations of earlier pages along with each request, so names, terms and tone stay consistent. Off by default. (Part of [#1014](https://github.com/koharu-rs/koharu/pull/1014))
 
-Koharu Edge installs as a separate app, so it can sit next to upstream Koharu. Both share the same settings, downloaded models, API keys and projects. It updates itself from [this repository's releases](https://github.com/MOULINIER/koharu-edge/releases). Version `vX.Y.Z-edge.N` is the N-th Edge build on top of upstream Koharu `vX.Y.Z`.
+Koharu Edge installs as a separate app, so it can sit next to upstream Koharu. Both share the same settings, downloaded models, API keys and projects.
 
 Before reporting a bug upstream, check that it also happens in upstream Koharu, since the changes above don't exist there.
 
@@ -146,30 +149,7 @@ OpenAI-compatible endpoints are also supported.
 
 ## Installation
 
-> [!IMPORTANT]
-> Download Koharu Edge from [its releases page](https://github.com/MOULINIER/koharu-edge/releases/latest). The links, WinGet and Homebrew below install **upstream** Koharu, without Edge's changes.
->
-> Edge builds aren't code-signed: Windows SmartScreen and macOS Gatekeeper warn on first launch. On Windows, choose *More info → Run anyway*. On macOS, try to open the app once, then allow it under *System Settings → Privacy & Security → Open Anyway*.
-
-Download release builds from the [releases page](https://github.com/koharu-rs/koharu/releases/latest). [Installation requirements and first launch](https://koharu.rs/installation) vary by operating system.
-
-Builds are available for Windows, macOS, and Linux.
-
-### WinGet
-
-Install on Windows with [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/):
-
-```bash
-winget install koharu
-```
-
-### Homebrew
-
-Install on macOS with [Homebrew](https://brew.sh/):
-
-```bash
-brew install --cask koharu
-```
+Download Koharu Edge from the [releases page](https://github.com/MOULINIER/koharu-edge/releases/latest). Builds are available for Windows, macOS, and Linux. [Installation requirements and first launch](https://koharu.rs/installation) are the same as for upstream Koharu.
 
 ## Troubleshooting
 
