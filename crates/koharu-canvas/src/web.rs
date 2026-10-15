@@ -1343,9 +1343,12 @@ impl WebCanvas {
             .frame
             .as_ref()
             .ok_or_else(|| js_message("no prepared frame is installed"))?;
-        let layer = frame
-            .layer(id)
-            .ok_or_else(|| js_message("opacity target is not in the prepared frame"))?;
+        // Layers that draw nothing, such as text without a translation, have no frame
+        // entry. There is nothing to preview; the committed opacity still applies once
+        // they render.
+        let Some(layer) = frame.layer(id) else {
+            return Ok(());
+        };
         let changed = match opacity {
             Some(opacity) => {
                 if !opacity.is_finite() || !(0.0..=1.0).contains(&opacity) {
