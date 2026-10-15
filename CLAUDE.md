@@ -89,7 +89,7 @@ Crate READMEs are authoritative and detailed. Read the one for any crate you tou
 
 ## Fork workflow
 
-This repository is a fork. `origin` is `MOULINIER/koharu`, and `upstream` is `koharu-rs/koharu`. The fork's `main` follows upstream and carries extra commits on top: upstream PRs that are stalled or were closed, plus our own changes. The "About this fork" section of `README.md` lists everything the fork carries; update it whenever a change is adopted or dropped.
+This repository is a fork. `origin` is `MOULINIER/koharu`, and `upstream` is `koharu-rs/koharu`. The fork's `main` follows upstream and carries extra commits on top: upstream PRs that are stalled or were closed, plus our own changes. The "How this fork differs" section of `README.md` lists the user-visible changes the fork carries; update it whenever one is adopted or dropped.
 
 - **Syncing:** run `git fetch upstream` and then `git merge upstream/main`. Never rebase onto upstream or rewrite upstream commits. Upstream commits are GitHub-signed, so rewriting them (for example with `filter-branch`) changes their hashes and splits the fork from upstream.
 - **Adopting an upstream PR:**
