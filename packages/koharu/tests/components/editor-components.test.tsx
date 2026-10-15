@@ -885,7 +885,7 @@ describe('greenfield editor', () => {
       </TooltipProvider>,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Run OCR for Hello' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Run OCR' }))
 
     await waitFor(() =>
       expect(run).toHaveBeenCalledWith(
@@ -923,7 +923,7 @@ describe('greenfield editor', () => {
       </TooltipProvider>,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Run OCR for Hello' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Run OCR' }))
 
     await waitFor(() =>
       expect(run).toHaveBeenCalledWith(
@@ -943,7 +943,7 @@ describe('greenfield editor', () => {
       </TooltipProvider>,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Run OCR for Hello' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Run OCR' }))
 
     expect(run).not.toHaveBeenCalled()
     expect(warning).toHaveBeenCalledWith({

@@ -236,7 +236,7 @@
     "lockedLabel": "{{name}} 已锁定",
     "moveDown": "下移 {{name}}",
     "moveUp": "上移 {{name}}",
-    "ocr": "对 {{name}} 运行 OCR",
+    "ocr": "运行 OCR",
     "opacityLabel": "{{name}} 不透明度",
     "originalArtwork": "原始图稿",
     "show": "显示 {{name}}",

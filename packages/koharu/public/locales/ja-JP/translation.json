@@ -236,7 +236,7 @@
     "lockedLabel": "{{name}}はロックされています",
     "moveDown": "{{name}}を下へ移動",
     "moveUp": "{{name}}を上へ移動",
-    "ocr": "{{name}}のOCRを実行",
+    "ocr": "OCRを実行",
     "opacityLabel": "{{name}}の不透明度",
     "originalArtwork": "元のアートワーク",
     "show": "{{name}}を表示",

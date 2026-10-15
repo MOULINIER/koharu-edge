@@ -236,7 +236,7 @@
     "lockedLabel": "{{name}} kilitli",
     "moveDown": "{{name}} öğesini aşağı taşı",
     "moveUp": "{{name}} öğesini yukarı taşı",
-    "ocr": "{{name}} için OCR çalıştır",
+    "ocr": "OCR çalıştır",
     "opacityLabel": "{{name}} opaklığı",
     "originalArtwork": "Orijinal çizim",
     "show": "{{name}} öğesini göster",

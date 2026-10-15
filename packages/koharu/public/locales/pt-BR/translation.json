@@ -236,7 +236,7 @@
     "lockedLabel": "{{name}} está bloqueada",
     "moveDown": "Mover {{name}} para baixo",
     "moveUp": "Mover {{name}} para cima",
-    "ocr": "Executar OCR em {{name}}",
+    "ocr": "Executar OCR",
     "opacityLabel": "Opacidade de {{name}}",
     "originalArtwork": "Arte original",
     "show": "Mostrar {{name}}",

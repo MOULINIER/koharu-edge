@@ -1145,7 +1145,7 @@ function LayerEditor({ layer, onDelete }: { layer: Layer; onDelete?: () => void 
                       variant='ghost'
                       size='xs'
                       disabled={running}
-                      aria-label={t('layers.ocr', { name })}
+                      aria-label={t('layers.ocr')}
                       className={`${canResetTextFrame ? '' : 'ml-auto '}h-5 gap-1 rounded-md px-1.5 text-[9px] font-normal text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-40`}
                       onClick={runOcr}
                     />
@@ -1154,7 +1154,7 @@ function LayerEditor({ layer, onDelete }: { layer: Layer; onDelete?: () => void 
                   <ScanText className='size-3' />
                   OCR
                 </TooltipTrigger>
-                <TooltipContent side='left'>{t('layers.ocr', { name })}</TooltipContent>
+                <TooltipContent side='left'>{t('layers.ocr')}</TooltipContent>
               </Tooltip>
             )}
           </div>

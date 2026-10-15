@@ -236,7 +236,7 @@
     "lockedLabel": "{{name}} заблокирован",
     "moveDown": "Переместить {{name}} вниз",
     "moveUp": "Переместить {{name}} вверх",
-    "ocr": "Запустить OCR для {{name}}",
+    "ocr": "Запустить OCR",
     "opacityLabel": "Непрозрачность {{name}}",
     "originalArtwork": "Исходное изображение",
     "show": "Показать {{name}}",

@@ -236,7 +236,7 @@
     "lockedLabel": "{{name}}이(가) 잠겨 있습니다",
     "moveDown": "{{name}} 아래로 이동",
     "moveUp": "{{name}} 위로 이동",
-    "ocr": "{{name}} OCR 실행",
+    "ocr": "OCR 실행",
     "opacityLabel": "{{name}} 불투명도",
     "originalArtwork": "원본 아트워크",
     "show": "{{name}} 표시",

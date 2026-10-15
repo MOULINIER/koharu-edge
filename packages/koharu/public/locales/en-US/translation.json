@@ -234,7 +234,7 @@
     "lockedLabel": "{{name}} is locked",
     "moveDown": "Move {{name}} down",
     "moveUp": "Move {{name}} up",
-    "ocr": "Run OCR for {{name}}",
+    "ocr": "Run OCR",
     "ocrBlocked": "OCR not run",
     "ocrRequiresEmptySource": "Clear source text before running OCR.",
     "opacityLabel": "{{name}} opacity",
