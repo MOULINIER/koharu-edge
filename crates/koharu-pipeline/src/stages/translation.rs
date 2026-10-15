@@ -64,6 +64,15 @@ impl StageProcessor for Processor {
             self.config.context_pages,
             self.config.target_language,
         )?;
+        tracing::debug!(
+            page = %input.page,
+            segments = targets.len(),
+            context = context.len(),
+            "translation request"
+        );
+        for entry in &context {
+            tracing::debug!(source = %entry.source, translation = %entry.translation, "translation context");
+        }
         if !context.is_empty() {
             request = request.with_context(context);
         }
