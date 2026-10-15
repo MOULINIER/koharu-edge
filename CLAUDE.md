@@ -89,7 +89,7 @@ Crate READMEs are authoritative and detailed. Read the one for any crate you tou
 
 ## Fork workflow
 
-This repository is a fork. `origin` is `MOULINIER/koharu`, and `upstream` is `koharu-rs/koharu`. The fork's `main` follows upstream and carries extra commits on top: upstream PRs that are stalled or were closed, plus our own changes. The "How this fork differs" section of `README.md` lists the user-visible changes the fork carries; update it whenever one is adopted or dropped.
+This repository is Koharu Edge, a fork of Koharu. `origin` is `MOULINIER/koharu-edge`, and `upstream` is `koharu-rs/koharu`. The fork's `main` follows upstream and carries extra commits on top: upstream PRs that are stalled or were closed, plus our own changes. The "How this fork differs" section of `README.md` lists the user-visible changes the fork carries; update it whenever one is adopted or dropped.
 
 - **Syncing:** run `git fetch upstream` and then `git merge upstream/main`. Never rebase onto upstream or rewrite upstream commits. Upstream commits are GitHub-signed, so rewriting them (for example with `filter-branch`) changes their hashes and splits the fork from upstream.
 - **Adopting an upstream PR:**
@@ -100,6 +100,17 @@ This repository is a fork. `origin` is `MOULINIER/koharu`, and `upstream` is `ko
 - **Upstream merges a PR we carry:** keep upstream's version and drop ours during the merge.
 - **Merge conflicts in generated files** (`protocol.ts`, `bun.lock`): regenerate them rather than merging by hand.
 - **Commits:** no `Co-Authored-By` or other AI attribution trailers. Never push unless the user explicitly asks.
+- **App identity:** Koharu Edge is a separate app. Keep these as the fork sets them when upstream changes nearby lines:
+  - the `productName`, `identifier` and window titles in `crates/koharu/tauri*.conf.json`;
+  - the updater `pubkey` and `endpoints`, which point at Edge's own releases;
+  - the GitHub link in `TitleBar.tsx`.
+
+  Settings, models, keychain and projects use hardcoded `koharu` paths, so they're shared with upstream Koharu on purpose.
+- **Releases:**
+  - `.github/workflows/edge-release.yml` builds from tags `vX.Y.Z-edge.N`, where `X.Y.Z` is the upstream workspace version. The version is set from the tag at build time, so never bump `[workspace.package].version` in the fork.
+  - `bun run edge:tag` creates the next tag locally. Pushing the tag (only when asked) publishes the release.
+  - The updater signing key and its password are the repository secrets `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+  - Upstream's `release.yml`, `release-pr.yml` and `sponsors.yml` are deleted in the fork: they publish as upstream (WinGet, Release Please, SignPath, Sentry). When an upstream sync brings modify/delete conflicts on them, keep them deleted, and port any build fix they contain into `edge-release.yml`.
 
 ## Open questions
 

@@ -1,0 +1,115 @@
+name: Edge Release
+
+# Koharu Edge releases. Upstream's release.yml publishes as upstream (WinGet, SignPath,
+# Apple notarization, Sentry), so the fork builds from its own tags instead:
+# `vX.Y.Z-edge.N`, where X.Y.Z is the upstream version the build is based on.
+# The version comes from the tag at build time, so the fork never edits the
+# workspace version and upstream version bumps merge cleanly.
+
+on:
+  push:
+    tags:
+      - 'v*-edge.*'
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Ad-hoc signed: unsigned Apple Silicon apps are reported as damaged.
+          - platform: 'macos-latest' # for Arm based macs (M1 and above).
+            args: '--target aarch64-apple-darwin --config ''{"bundle":{"macOS":{"signingIdentity":"-"}}}'''
+          - platform: 'ubuntu-latest'
+            args: ''
+          - platform: 'ubuntu-24.04-arm'
+            args: ''
+          # MSI rejects non-numeric pre-release versions such as `-edge.1`.
+          - platform: 'windows-latest'
+            args: '--bundles nsis'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: koharu-edge-${{ matrix.platform }}
+
+      - name: Install macOS CEF helper targets
+        if: startsWith(matrix.platform, 'macos')
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: install dependencies (ubuntu only)
+        if: startsWith(matrix.platform, 'ubuntu')
+        run: |
+          sudo apt update
+          sudo apt install --no-install-recommends \
+            libgtk-4-dev \
+            build-essential \
+            llvm \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ matrix.platform }}-bun-${{ hashFiles('**/bun.lock') }}
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Release metadata
+        id: meta
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          base="${TAG#v}"
+          base="${base%%-edge.*}"
+          previous=$(git describe --tags --abbrev=0 --match 'v*-edge.*' "$TAG^" 2>/dev/null || true)
+          {
+            echo 'body<<EOF'
+            echo "Koharu Edge, based on upstream Koharu v$base."
+            echo "See [how this fork differs](https://github.com/${GITHUB_REPOSITORY}#how-this-fork-differs)."
+            echo
+            if [ -n "$previous" ]; then
+              echo "## Changes since $previous"
+              git log --first-parent --format='- %s' "$previous..$TAG"
+            fi
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tauriScript: cargo tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: Koharu Edge ${{ github.ref_name }}
+          releaseBody: ${{ steps.meta.outputs.body }}
+          releaseDraft: false
+          prerelease: false
+          # The fork has no SignPath account, so upstream's Windows sign command is removed.
+          args: >-
+            ${{ matrix.args }}
+            --config '{"version":"${{ steps.meta.outputs.version }}","bundle":{"windows":{"signCommand":null}}}'
