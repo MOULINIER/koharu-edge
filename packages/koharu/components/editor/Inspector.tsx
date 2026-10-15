@@ -1,6 +1,12 @@
 'use client'
 
-import { DragDropProvider, type DragEndEvent, type DragMoveEvent } from '@dnd-kit/react'
+import {
+  DragDropProvider,
+  KeyboardSensor,
+  PointerSensor,
+  type DragEndEvent,
+  type DragMoveEvent,
+} from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import type { TFunction } from 'i18next'
 import {
@@ -558,6 +564,18 @@ function computeDropPos(
   }
 }
 
+// A row drags after a short move or hold, so clicks still select it. Pointer gestures
+// that start in the expanded layer editor (opacity slider, inputs) never start a drag;
+// a drag handle can't be used instead, because handles activate on the first press.
+const layerRowSensors = [
+  PointerSensor.configure({
+    preventActivation: (event, source) =>
+      (event.target instanceof Element && event.target.closest('[data-layer-editor]') !== null) ||
+      (PointerSensor.defaults.preventActivation?.(event, source) ?? false),
+  }),
+  KeyboardSensor,
+]
+
 function LayersInspector() {
   const { t } = useTranslation()
   const page = usePage().data
@@ -876,16 +894,11 @@ function LayerRow({
   const Icon = layerIcon(layer)
 
   // `index` names the layer; the sortable index is the row's position in the list.
-  // Only the row header drags, so the expanded editor's controls (opacity slider,
-  // inputs) keep their own pointer gestures.
-  const {
-    ref: sortableRef,
-    handleRef,
-    isDragging,
-  } = useSortable({
+  const { ref: sortableRef, isDragging } = useSortable({
     id: layer.id,
     index: row,
     disabled: locked || reordering,
+    sensors: layerRowSensors,
   })
 
   return (
@@ -913,7 +926,6 @@ function LayerRow({
       >
         <div className='relative flex min-w-0 items-center gap-0.5'>
           <div
-            ref={handleRef}
             role='button'
             tabIndex={locked ? undefined : 0}
             aria-label={t('layers.edit', { name })}
@@ -1067,7 +1079,7 @@ function LayerEditor({ layer, onDelete }: { layer: Layer; onDelete?: () => void 
   }
 
   return (
-    <div className='grid min-w-0 gap-1.5 px-1.5 pt-0.5 pb-1.5'>
+    <div data-layer-editor className='grid min-w-0 gap-1.5 px-1.5 pt-0.5 pb-1.5'>
       <div className='flex min-w-0 items-center gap-1.5'>
         <span className='shrink-0 text-[8px] font-medium text-muted-foreground uppercase'>
           {t('inspector.opacity')}
