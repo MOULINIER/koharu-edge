@@ -99,7 +99,8 @@ This repository is Koharu Edge, a fork of Koharu. `origin` is `MOULINIER/koharu-
   4. Set the PR author as `--author`. If we rewrote most of it, we author the commit and credit the PR author in the message.
 - **Upstream merges a PR we carry:** keep upstream's version and drop ours during the merge.
 - **Merge conflicts in generated files** (`protocol.ts`, `bun.lock`): regenerate them rather than merging by hand.
-- **Commits:** no `Co-Authored-By` or other AI attribution trailers. Never push unless the user explicitly asks.
+- **Commits:** no `Co-Authored-By` or other AI attribution trailers. Never push unless the user explicitly asks, and not before they have tried the new features in the app.
+- **Fixing unpushed commits:** fold a bug fix into the unpushed commit that introduced it (`git commit --fixup=<sha>`, then `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <sha>^`) instead of adding a follow-up commit. Only rewrite `origin/main..main`. Don't rebase across an upstream merge commit: use `--rebase-merges`, or keep the fix as its own commit. Fixes for pushed commits are always new commits.
 - **App identity:** Koharu Edge is a separate app. Keep these as the fork sets them when upstream changes nearby lines:
   - the `productName`, `identifier` and window titles in `crates/koharu/tauri*.conf.json`;
   - the updater `pubkey` and `endpoints`, which point at Edge's own releases;
