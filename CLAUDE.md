@@ -87,6 +87,20 @@ Crate READMEs are authoritative and detailed. Read the one for any crate you tou
 - Linux builds need GTK 4 and friends (see the `apt install` list in `.github/workflows/lint.yml`). The Rust tests in CI also need `fonts-noto-cjk`, `dbus-x11` and `gnome-keyring`, because renderer tests use CJK fonts and the secrets tests use the keyring.
 - `.cargo/config.toml` sets `CARGO_WORKSPACE_DIR` to the repo root. Dev profile builds image/codec/canvas/rasterizer crates at `opt-level = 3`, so the first debug build is slower than expected.
 
+## Fork workflow
+
+This repository is a fork. `origin` is `MOULINIER/koharu`, and `upstream` is `koharu-rs/koharu`. The fork's `main` follows upstream and carries extra commits on top: upstream PRs that are stalled or were closed, plus our own changes. The "About this fork" section of `README.md` lists everything the fork carries; update it whenever a change is adopted or dropped.
+
+- **Syncing:** run `git fetch upstream` and then `git merge upstream/main`. Never rebase onto upstream or rewrite upstream commits. Upstream commits are GitHub-signed, so rewriting them (for example with `filter-branch`) changes their hashes and splits the fork from upstream.
+- **Adopting an upstream PR:**
+  1. Fetch it with `git fetch upstream pull/<N>/head:pr/<N>`.
+  2. Review it critically before landing anything. Check it for bugs, check it still fits the current `main`, and check it against `AGENTS.md`. Fix what's wrong. When a design choice is unclear, ask the user rather than guessing.
+  3. Squash it into one Conventional Commit titled `... (upstream #N)`. The body lists what we changed relative to the PR.
+  4. Set the PR author as `--author`. If we rewrote most of it, we author the commit and credit the PR author in the message.
+- **Upstream merges a PR we carry:** keep upstream's version and drop ours during the merge.
+- **Merge conflicts in generated files** (`protocol.ts`, `bun.lock`): regenerate them rather than merging by hand.
+- **Commits:** no `Co-Authored-By` or other AI attribution trailers. Never push unless the user explicitly asks.
+
 ## Open questions
 
 - There is no local wrapper for the CI Rust tests' dependency on the keyring/dbus. It is unclear which tests fail without them on Windows/macOS.
