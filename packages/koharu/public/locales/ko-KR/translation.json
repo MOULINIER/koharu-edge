@@ -62,8 +62,9 @@
   "colorPicker": {
     "brushColor": "브러시 색상",
     "hexCode": "16진수 색상 코드",
-    "recent": "최근 색상",
-    "recentColor": "최근 색상 {{color}}",
+    "palette": "프로젝트 색상",
+    "paletteAdd": "이 색상을 프로젝트에 저장",
+    "paletteColor": "{{color}} (우클릭하여 삭제)",
     "sampleCanvas": "캔버스에서 색상 선택",
     "transparent": "투명"
   },

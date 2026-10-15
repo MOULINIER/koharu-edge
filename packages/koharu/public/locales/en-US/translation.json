@@ -62,8 +62,9 @@
   "colorPicker": {
     "brushColor": "Brush color",
     "hexCode": "Hex color code",
-    "recent": "Recent colors",
-    "recentColor": "Recent color {{color}}",
+    "palette": "Project colors",
+    "paletteAdd": "Save this color to the project",
+    "paletteColor": "{{color}} (right-click to remove)",
     "sampleCanvas": "Pick color from canvas",
     "transparent": "Transparent"
   },

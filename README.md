@@ -32,7 +32,7 @@ Koharu introduces a local-first workflow for manga translation, utilizing the po
 Koharu Edge tracks upstream Koharu's `main` branch and adds the changes below. Most of them come from upstream pull requests that are still waiting for review or were closed. Each one was reviewed, and fixed where needed, before it was merged here. When upstream ships its own version of a change, Koharu Edge switches to it.
 
 - **Cleaner text detection:** a paragraph detected both as one large box and as smaller boxes inside it now becomes a single text block, instead of overlapping duplicates. ([#1070](https://github.com/koharu-rs/koharu/pull/1070))
-- **Recent colors:** color pickers remember the last 8 colors you used. ([#989](https://github.com/koharu-rs/koharu/pull/989))
+- **Project colors:** save colors to a manga with the **+** in any color picker, then click one to reuse it on any page. Right-click a color to remove it. Saved in the project file.
 - **Drag-and-drop layers:** reorder layers, or move them into groups, by dragging them in the layers panel. ([#959](https://github.com/koharu-rs/koharu/pull/959))
 - **OCR a single text frame:** each text layer has an OCR button, which also works on frames you drew yourself. Clearing a frame's source text lets OCR fill it again. ([#1065](https://github.com/koharu-rs/koharu/pull/1065))
 - **Consistent translations across pages:** **Settings → Translation → Context from previous pages** sends the translations of earlier pages along with each request, so names, terms and tone stay consistent. Off by default. (Part of [#1014](https://github.com/koharu-rs/koharu/pull/1014))

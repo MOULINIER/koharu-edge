@@ -203,6 +203,7 @@ function installProject() {
     active_page: 'page',
     can_undo: true,
     can_redo: false,
+    palette: [],
   })
   queryClient.setQueryData(pagesKey, [
     {
@@ -536,6 +537,7 @@ describe('greenfield editor', () => {
           active_page: 'page-3',
           can_undo: true,
           can_redo: false,
+          palette: [],
         },
         page: pages[2]!,
       })
@@ -549,6 +551,7 @@ describe('greenfield editor', () => {
           active_page: 'page-2',
           can_undo: true,
           can_redo: false,
+          palette: [],
         },
         page: pages[1]!,
       })

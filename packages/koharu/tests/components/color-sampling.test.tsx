@@ -1,17 +1,34 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render as testingRender, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ReactElement } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ColorSamplingProvider, useColorSampling } from '@/components/controls/ColorSampling'
 import { ColorWell } from '@/components/controls/ColorWell'
-import { COLOR_HISTORY_STORAGE_KEY, useColorHistory } from '@/lib/colorHistory'
+import { projectKey, queryClient } from '@/lib/queries'
 import { useKoharuStore } from '@/lib/store'
+import { commands, type ProjectInfo } from '@koharu/bridge/protocol'
+
+function render(ui: ReactElement) {
+  return testingRender(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>)
+}
+
+function openProject(palette: ProjectInfo['palette']) {
+  queryClient.setQueryData<ProjectInfo>(projectKey, {
+    name: 'Manga',
+    revision: 1,
+    active_page: null,
+    can_undo: false,
+    can_redo: false,
+    palette,
+  })
+}
 
 describe('canvas color sampling', () => {
   beforeEach(() => {
     useKoharuStore.setState({ tool: 'text' })
-    useColorHistory.setState({ colors: [] })
-    window.localStorage.removeItem(COLOR_HISTORY_STORAGE_KEY)
+    queryClient.setQueryData(projectKey, null)
   })
 
   it('applies a canvas sample to the requesting color well and restores the previous tool', async () => {
@@ -66,27 +83,34 @@ describe('canvas color sampling', () => {
     await waitFor(() => expect(onChange).toHaveBeenCalledWith('#FFFFFF'))
   })
 
-  it('records committed colors and reapplies them from the recent swatches', async () => {
+  it('saves, applies and removes project palette colors', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
-    const { rerender } = render(<ColorWell value='#111111' onChange={onChange} />)
+    const setPalette = vi.spyOn(commands, 'setPalette').mockResolvedValue(null)
+    openProject([[255, 0, 0]])
+    render(<ColorWell value='#111111' onChange={onChange} />)
 
     await user.click(screen.getByRole('button', { name: 'Brush color' }))
-    const hex = screen.getByRole('textbox', { name: 'Hex color code' })
-    fireEvent.change(hex, { target: { value: '#123' } })
-    fireEvent.change(hex, { target: { value: '#FF0000' } })
-    expect(screen.queryByRole('group', { name: 'Recent colors' })).not.toBeInTheDocument()
-    fireEvent.blur(hex)
-    fireEvent.change(hex, { target: { value: '#00FF00' } })
-    fireEvent.blur(hex)
+    await user.click(screen.getByRole('button', { name: 'Save this color to the project' }))
+    expect(setPalette).toHaveBeenLastCalledWith([
+      [255, 0, 0],
+      [17, 17, 17],
+    ])
 
-    expect(onChange).toHaveBeenCalledWith('#FF0000')
-    expect(onChange).toHaveBeenCalledWith('#00FF00')
-    expect(useColorHistory.getState().colors).toEqual(['#00FF00', '#FF0000'])
-
-    rerender(<ColorWell value='#00FF00' onChange={onChange} />)
-    await user.click(screen.getByRole('button', { name: 'Recent color #FF0000' }))
+    const saved = screen.getByRole('button', { name: '#FF0000 (right-click to remove)' })
+    await user.click(saved)
     expect(onChange).toHaveBeenLastCalledWith('#FF0000')
+
+    fireEvent.contextMenu(saved)
+    expect(setPalette).toHaveBeenLastCalledWith([])
+  })
+
+  it('hides the palette without an open project', async () => {
+    const user = userEvent.setup()
+    render(<ColorWell value='#111111' onChange={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: 'Brush color' }))
+    expect(screen.queryByRole('group', { name: 'Project colors' })).not.toBeInTheDocument()
   })
 })
 

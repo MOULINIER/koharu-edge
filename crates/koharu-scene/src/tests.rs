@@ -110,6 +110,7 @@ async fn built_in_component_schema_revisions_are_explicit() {
     assert_eq!(
         [
             schema::<Project>(),
+            schema::<Palette>(),
             schema::<Page>(),
             schema::<RasterLayer>(),
             schema::<Geometry>(),
@@ -128,7 +129,7 @@ async fn built_in_component_schema_revisions_are_explicit() {
             schema::<crate::components::Assets>(),
             schema::<Relation>(),
         ],
-        [1; 18]
+        [1; 19]
     );
     assert_eq!(schema::<TextLayout>(), 2);
 }
@@ -138,6 +139,7 @@ async fn built_in_component_kinds_express_domain_ownership() {
     assert_eq!(
         [
             Project::KIND,
+            Palette::KIND,
             Page::KIND,
             EntityOrigin::KIND,
             Relation::KIND,
@@ -159,6 +161,7 @@ async fn built_in_component_kinds_express_domain_ownership() {
         ],
         [
             "dev.koharu.project",
+            "dev.koharu.palette",
             "dev.koharu.page",
             "dev.koharu.entity.origin",
             "dev.koharu.relation",

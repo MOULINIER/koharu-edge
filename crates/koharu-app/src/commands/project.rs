@@ -5,11 +5,12 @@ use image::{DynamicImage, ImageFormat, RgbaImage};
 use koharu_desktop::Frame;
 use koharu_scene::{
     AssetInput, AssetMetadata, AssetRole, At, Authored, Commit, EntityId, EntityOrigin,
-    Geometry as SceneGeometry, Group as SceneGroup, Origin, PageDraft, Point as ScenePoint,
-    Presents, RasterLayer as SceneRasterLayer, RasterLayerKind, Region as SceneRegion,
-    RemovePolicy, Revision, Session, Snapshot, SourceText as SceneSourceText,
-    TextGroup as SceneTextGroup, TextLayout as SceneTextLayout, TextLayoutKind,
-    Translation as SceneTranslation, Typography as SceneTypography, Visibility as SceneVisibility,
+    Geometry as SceneGeometry, Group as SceneGroup, Origin, PageDraft, Palette,
+    Point as ScenePoint, Presents, RasterLayer as SceneRasterLayer, RasterLayerKind,
+    Region as SceneRegion, RemovePolicy, Revision, Session, Snapshot,
+    SourceText as SceneSourceText, TextGroup as SceneTextGroup, TextLayout as SceneTextLayout,
+    TextLayoutKind, Translation as SceneTranslation, Typography as SceneTypography,
+    Visibility as SceneVisibility,
 };
 use serde::Serialize;
 use specta::Type;
@@ -33,6 +34,8 @@ pub struct ProjectInfo {
     pub active_page: Option<EntityId>,
     pub can_undo: bool,
     pub can_redo: bool,
+    /// Colors saved for reuse across the project's pages, as RGB.
+    pub palette: Vec<[u8; 3]>,
 }
 
 #[derive(Clone, Debug, Serialize, Type)]
@@ -313,14 +316,31 @@ impl Project {
         }
     }
 
-    pub(crate) fn info(&self) -> ProjectInfo {
-        ProjectInfo {
+    pub(crate) fn info(&self) -> Result<ProjectInfo> {
+        Ok(ProjectInfo {
             name: self.name.clone(),
             revision: self.revision(),
             active_page: self.active_page,
             can_undo: !self.undo.is_empty(),
             can_redo: !self.redo.is_empty(),
-        }
+            palette: self
+                .snapshot()
+                .project_component::<Palette>()?
+                .map(|palette| palette.colors)
+                .unwrap_or_default(),
+        })
+    }
+
+    pub(crate) async fn set_palette(&mut self, colors: Vec<[u8; 3]>) -> Result<Commit> {
+        let snapshot = self.snapshot();
+        let patch = snapshot.patch(|edit| {
+            if colors.is_empty() {
+                edit.remove_project::<Palette>()
+            } else {
+                edit.set_project(&Palette { colors })
+            }
+        })?;
+        self.commit(patch).await
     }
 
     pub(crate) fn pages(snapshot: &Snapshot) -> Result<Vec<PageSummary>> {
@@ -1363,6 +1383,23 @@ mod tests {
             Project::typography_view(typography).writing_mode,
             Some(WritingMode::Vertical)
         );
+    }
+
+    #[tokio::test]
+    async fn palette_is_saved_with_the_project_and_cleared_when_empty() {
+        let session = Session::memory().await.unwrap();
+        let mut project = Project::new(session, "test".to_owned());
+        assert!(project.info().unwrap().palette.is_empty());
+
+        project
+            .set_palette(vec![[255, 0, 0], [0, 0, 255]])
+            .await
+            .unwrap();
+        assert_eq!(project.info().unwrap().palette, [[255, 0, 0], [0, 0, 255]]);
+        assert!(project.set_palette(vec![[1, 2, 3]; 2]).await.is_err());
+
+        project.set_palette(Vec::new()).await.unwrap();
+        assert!(project.info().unwrap().palette.is_empty());
     }
 
     #[tokio::test]

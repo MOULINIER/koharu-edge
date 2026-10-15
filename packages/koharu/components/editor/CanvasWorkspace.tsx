@@ -10,7 +10,6 @@ import { StatusBar } from '@/components/editor/StatusBar'
 import { ToolBar } from '@/components/editor/ToolBar'
 import { useCanvas } from '@/components/editor/useCanvas'
 import { call } from '@/lib/backend'
-import { rememberColor } from '@/lib/colorHistory'
 import { expandLayerSelection } from '@/lib/document'
 import {
   controlFrame,
@@ -677,10 +676,7 @@ export function CanvasWorkspace() {
                 .sampleColor(physical)
                 .then((color) => {
                   const hex = rgbaToHex(color)
-                  if (!colorSampling?.complete(hex)) {
-                    rememberColor(hex)
-                    setBrush({ ...brush, color: hex })
-                  }
+                  if (!colorSampling?.complete(hex)) setBrush({ ...brush, color: hex })
                 })
                 .catch((error: unknown) => receiveError(errorMessage(error)))
             }

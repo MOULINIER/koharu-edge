@@ -62,8 +62,9 @@
   "colorPicker": {
     "brushColor": "Цвет кисти",
     "hexCode": "Шестнадцатеричный код цвета",
-    "recent": "Недавние цвета",
-    "recentColor": "Недавний цвет {{color}}",
+    "palette": "Цвета проекта",
+    "paletteAdd": "Сохранить этот цвет в проекте",
+    "paletteColor": "{{color}} (правый клик — удалить)",
     "sampleCanvas": "Выбрать цвет с холста",
     "transparent": "Прозрачный"
   },

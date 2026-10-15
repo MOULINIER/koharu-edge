@@ -54,6 +54,26 @@ pub(crate) async fn rename_page(
 
 #[tauri::command]
 #[specta::specta]
+pub(crate) async fn set_palette(
+    colors: Vec<[u8; 3]>,
+    desktop: State<'_, Desktop>,
+    project: State<'_, CurrentProject>,
+    canvas_channel: State<'_, CanvasChannel>,
+) -> Result<(), Error> {
+    let (commit, page) = {
+        let mut project = project.project.lock().await;
+        let project = project.as_mut().context("no project is open")?;
+        let commit = project.set_palette(colors).await?;
+        project.record_commit(&commit);
+        (commit, project.active_page())
+    };
+    let canvas = synchronize_canvas(&desktop, &commit, page).await?;
+    canvas_channel.channel.publish(canvas);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
 pub(crate) async fn delete_pages(
     pages: Vec<EntityId>,
     desktop: State<'_, Desktop>,

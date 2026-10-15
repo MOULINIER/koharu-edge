@@ -1,12 +1,14 @@
 'use client'
 
-import { Pipette, SquareSlash } from 'lucide-react'
+import { Pipette, Plus, SquareSlash } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { HexColorInput, HexColorPicker } from 'react-colorful'
 import { useTranslation } from 'react-i18next'
 
 import { useColorSampling } from '@/components/controls/ColorSampling'
-import { useColorHistory } from '@/lib/colorHistory'
+import { call } from '@/lib/backend'
+import { projectKey, refresh, useProject } from '@/lib/queries'
+import { commands } from '@koharu/bridge/protocol'
 import { Button } from '@koharu/ui/components/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@koharu/ui/components/popover'
 import { cn } from '@koharu/ui/lib/utils'
@@ -35,8 +37,6 @@ export function ColorWell(props: ColorWellProps) {
   const [transparent, setTransparent] = useState(value === null)
   const [open, setOpen] = useState(false)
   const sampling = useColorSampling()
-  const recent = useColorHistory((state) => state.colors)
-  const remember = useColorHistory((state) => state.remember)
   const accessibleLabel = label ?? t('colorPicker.brushColor')
 
   useEffect(() => {
@@ -48,16 +48,13 @@ export function ColorWell(props: ColorWellProps) {
     }
   }, [value])
 
-  const apply = (color: string) => {
+  const set = (color: string) => {
     const normalized = normalize(color)
     setDraft(normalized)
     setTransparent(false)
     if (props.allowTransparent) props.onChange(normalized)
     else props.onChange(normalized)
-    return normalized
   }
-
-  const set = (color: string) => remember(apply(color))
 
   const clear = () => {
     if (!props.allowTransparent) return
@@ -104,12 +101,7 @@ export function ColorWell(props: ColorWellProps) {
             color={draft}
             aria-label={t('colorPicker.hexCode')}
             className='h-8 min-w-0 flex-1 rounded-lg border border-input bg-background px-2 font-mono text-[11px] uppercase outline-none focus:border-ring'
-            // Typing passes through valid shorthand prefixes (#123 → #112233); only
-            // the value left when the field loses focus is worth remembering.
-            onChange={apply}
-            onBlur={() => {
-              if (!transparent) remember(draft)
-            }}
+            onChange={set}
           />
           {sampling && (
             <Button
@@ -125,31 +117,7 @@ export function ColorWell(props: ColorWellProps) {
             </Button>
           )}
         </div>
-        {recent.length > 0 && (
-          <div
-            role='group'
-            aria-label={t('colorPicker.recent')}
-            className='mt-3 grid grid-cols-8 gap-1'
-          >
-            {recent.map((color) => {
-              const selected = !transparent && color === draft
-              return (
-                <button
-                  key={color}
-                  type='button'
-                  aria-label={t('colorPicker.recentColor', { color })}
-                  aria-pressed={selected}
-                  className={cn(
-                    'size-5 rounded-[3px] ring-1 ring-black/15 outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    selected && 'ring-2 ring-ring',
-                  )}
-                  style={{ backgroundColor: color }}
-                  onClick={() => set(color)}
-                />
-              )
-            })}
-          </div>
-        )}
+        <ProjectPalette current={transparent ? null : draft} onPick={set} />
         {allowTransparent && (
           <Button
             type='button'
@@ -165,6 +133,71 @@ export function ColorWell(props: ColorWellProps) {
       </PopoverContent>
     </Popover>
   )
+}
+
+// Mirrors `Palette::MAX_COLORS` in koharu-scene.
+const PALETTE_LIMIT = 32
+
+// The open project's saved colors: click to apply, right-click to remove.
+function ProjectPalette({
+  current,
+  onPick,
+}: {
+  current: string | null
+  onPick: (color: string) => void
+}) {
+  const { t } = useTranslation()
+  const project = useProject().data
+  if (!project) return null
+  const colors = project.palette.map(rgbToHex)
+  const save = (next: string[]) =>
+    void call(commands.setPalette, next.map(hexToRgb))
+      .then(() => refresh(projectKey))
+      .catch(() => undefined)
+  const canAdd = current !== null && !colors.includes(current) && colors.length < PALETTE_LIMIT
+  return (
+    <div role='group' aria-label={t('colorPicker.palette')} className='mt-3 flex flex-wrap gap-1'>
+      {colors.map((color) => (
+        <button
+          key={color}
+          type='button'
+          title={t('colorPicker.paletteColor', { color })}
+          aria-label={t('colorPicker.paletteColor', { color })}
+          aria-pressed={color === current}
+          className={cn(
+            'size-5 rounded-[3px] ring-1 ring-black/15 outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            color === current && 'ring-2 ring-ring',
+          )}
+          style={{ backgroundColor: color }}
+          onClick={() => onPick(color)}
+          onContextMenu={(event) => {
+            event.preventDefault()
+            save(colors.filter((candidate) => candidate !== color))
+          }}
+        />
+      ))}
+      {canAdd && (
+        <button
+          type='button'
+          title={t('colorPicker.paletteAdd')}
+          aria-label={t('colorPicker.paletteAdd')}
+          className='grid size-5 place-items-center rounded-[3px] border border-dashed border-input text-muted-foreground hover:text-foreground'
+          onClick={() => save([...colors, current])}
+        >
+          <Plus className='size-3' />
+        </button>
+      )}
+    </div>
+  )
+}
+
+function rgbToHex(color: [number, number, number]): string {
+  return `#${color.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`.toUpperCase()
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const value = Number.parseInt(hex.slice(1), 16)
+  return [(value >> 16) & 0xff, (value >> 8) & 0xff, value & 0xff]
 }
 
 function normalize(value: string): string {

@@ -62,8 +62,9 @@
   "colorPicker": {
     "brushColor": "ブラシカラー",
     "hexCode": "16進カラーコード",
-    "recent": "最近使った色",
-    "recentColor": "最近使った色 {{color}}",
+    "palette": "プロジェクトの色",
+    "paletteAdd": "この色をプロジェクトに保存",
+    "paletteColor": "{{color}}（右クリックで削除）",
     "sampleCanvas": "キャンバスから色を選択",
     "transparent": "透明"
   },

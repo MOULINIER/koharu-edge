@@ -40,6 +40,41 @@ impl Component for Project {
     }
 }
 
+/// Colors saved for reuse across a project's pages, in the order they were added.
+///
+/// A separate project component rather than a `Project` field, so projects keep
+/// decoding in Koharu builds that don't know about palettes.
+#[revisioned(revision = 1)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize, Type)]
+pub struct Palette {
+    pub colors: Vec<[u8; 3]>,
+}
+
+impl Palette {
+    pub const MAX_COLORS: usize = 32;
+}
+
+impl Component for Palette {
+    const KIND: &'static str = "dev.koharu.palette";
+
+    fn validate(&self, _context: &ValidationContext<'_>) -> Result<()> {
+        if self.colors.len() > Self::MAX_COLORS {
+            return Err(Error::invalid(format!(
+                "a palette holds at most {} colors",
+                Self::MAX_COLORS
+            )));
+        }
+        let mut colors = self.colors.clone();
+        colors.sort_unstable();
+        colors.dedup();
+        if colors.len() == self.colors.len() {
+            Ok(())
+        } else {
+            Err(Error::invalid("palette colors contain duplicates"))
+        }
+    }
+}
+
 #[revisioned(revision = 1)]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Type)]
 pub struct Page {
