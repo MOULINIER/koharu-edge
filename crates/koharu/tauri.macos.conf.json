@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/1991873f5e2baa68773f21465f61baa93077498f/crates/tauri-schema-generator/schemas/config.schema.json",
-  "identifier": "Koharu",
+  "identifier": "KoharuEdge",
   "app": {
     "windows": [
       {
@@ -11,7 +11,7 @@
         "minWidth": 900,
         "minHeight": 600,
         "center": true,
-        "title": "Koharu",
+        "title": "Koharu Edge",
         "decorations": true,
         "titleBarStyle": "Overlay",
         "trafficLightPosition": { "x": 16, "y": 23 },

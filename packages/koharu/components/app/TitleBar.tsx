@@ -251,7 +251,7 @@ export function TitleBar() {
               </MenubarItem>
               <MenubarItem
                 onClick={() =>
-                  void openUrl('https://github.com/koharu-rs/koharu').catch(() => undefined)
+                  void openUrl('https://github.com/MOULINIER/koharu-edge').catch(() => undefined)
                 }
               >
                 {t('menu.github')}

@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/1991873f5e2baa68773f21465f61baa93077498f/crates/tauri-schema-generator/schemas/config.schema.json",
-  "identifier": "Koharu",
+  "productName": "Koharu Edge",
+  "identifier": "KoharuEdge",
   "build": {
     "devUrl": "http://localhost:3000",
     "frontendDist": "../../packages/koharu/out",
@@ -20,7 +21,7 @@
         "minWidth": 900,
         "minHeight": 600,
         "center": true,
-        "title": "Koharu",
+        "title": "Koharu Edge",
         "decorations": false,
         "transparent": false,
         "visible": false
@@ -43,8 +44,8 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQ1QjAxQjRENzYxOTE1MDYKUldRR0ZSbDJUUnV3MWFXN09pNjhoRmNMSTV2Ylh3Wm9CZHhiRE01RVZtYXFLWVd4Vi9SbkE4QnUK",
-      "endpoints": ["https://github.com/koharu-rs/koharu/releases/latest/download/latest.json"],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDYzNDVFMTYzNkM2RkZFMDAKUldRQS9tOXNZK0ZGWStJQkI3RGpOeUxFc2V0T0FSWDlQcWhvVlN2UGdhN1orQ1k3SFVadVN2U2MK",
+      "endpoints": ["https://github.com/MOULINIER/koharu-edge/releases/latest/download/latest.json"],
       "windows": {
         "installMode": "quiet"
       }
