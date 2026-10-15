@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/tauri-v3.0.0-alpha.1/crates/tauri-schema-generator/schemas/config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/1991873f5e2baa68773f21465f61baa93077498f/crates/tauri-schema-generator/schemas/config.schema.json",
   "identifier": "Koharu",
   "build": {
     "devUrl": "http://localhost:3000",
@@ -8,7 +8,6 @@
     "beforeBuildCommand": "bun run --filter @koharu/bridge build && bun run --filter @koharu/app build"
   },
   "app": {
-    "macOSPrivateApi": true,
     "security": {
       "csp": null
     },

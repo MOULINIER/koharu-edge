@@ -2,6 +2,8 @@
 
 Thank you for helping improve Koharu. Bug fixes, documentation, translations, model-port corrections, and focused product improvements are all welcome.
 
+Everyone participating in the Koharu community is expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## Getting started
 
 - Browse the [good first issues](https://github.com/koharu-rs/koharu/contribute) or search existing [issues](https://github.com/koharu-rs/koharu/issues) and pull requests.
@@ -17,6 +19,6 @@ An open issue, feature request, or working implementation is not a promise that 
 
 AI tools may assist development or communication, but a human contributor must remain the author and owner of every submission. Do not submit autonomous or unreviewed issues, pull requests, review comments, or security reports.
 
-Personally review the complete diff, verify generated claims against the code, understand and be able to explain every change, and provide the same relevant tests and evidence expected from any other contribution. If AI substantially helped design or implement a change, disclose the extent and purpose of that assistance in the pull request description.
+Personally review the complete diff, verify generated claims against the code, understand and be able to explain every change, and provide the same relevant tests and evidence expected from any other contribution.
 
-For more details, read the complete [contributing guide](https://koharu.rs/en/development/contributing).
+For more details, read the complete [contributing guide](https://koharu.rs/development/contributing).
