@@ -41,6 +41,7 @@ import {
   type Preferences,
   type ProjectInfo,
 } from '@koharu/bridge/protocol'
+import { toast } from '@koharu/ui/components/toast'
 import { TooltipProvider } from '@koharu/ui/components/tooltip'
 
 const nativeWindow = vi.hoisted(() => ({
@@ -79,7 +80,7 @@ const textLayer: Layer = {
     source: { text: 'こんにちは', language: 'ja' },
     translation: { text: 'Hello', language: null },
     role: null,
-    source_region: null,
+    source_region: 'region',
   },
   typography: {
     preferred_font: 'Noto Sans',
@@ -861,6 +862,95 @@ describe('greenfield editor', () => {
     fireEvent.change(source, { target: { value: 'corrected OCR' } })
     fireEvent.blur(source)
     await waitFor(() => expect(save).toHaveBeenCalledWith('element', 'corrected OCR'))
+  })
+
+  it('runs OCR for one text layer from the layer inspector', async () => {
+    installProject()
+    queryClient.setQueryData(pageKey, (page: { layers: Layer[] } | undefined) =>
+      page
+        ? {
+            ...page,
+            layers: page.layers.map((layer) =>
+              layer.type === 'text'
+                ? { ...layer, content: { ...layer.content, source: { text: '', language: null } } }
+                : layer,
+            ),
+          }
+        : page,
+    )
+    const run = vi.spyOn(commands, 'process').mockResolvedValue('job')
+    render(
+      <TooltipProvider>
+        <Inspector />
+      </TooltipProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run OCR for Hello' }))
+
+    await waitFor(() =>
+      expect(run).toHaveBeenCalledWith(
+        { scope: 'entities', value: ['element'] },
+        { operation: 'only', stage: 'ocr' },
+      ),
+    )
+  })
+
+  it('runs OCR for a custom text frame', async () => {
+    installProject()
+    queryClient.setQueryData(pageKey, (page: { layers: Layer[] } | undefined) =>
+      page
+        ? {
+            ...page,
+            layers: page.layers.map((layer) =>
+              layer.type === 'text'
+                ? {
+                    ...layer,
+                    content: {
+                      ...layer.content,
+                      source: { text: '', language: null },
+                      source_region: null,
+                    },
+                  }
+                : layer,
+            ),
+          }
+        : page,
+    )
+    const run = vi.spyOn(commands, 'process').mockResolvedValue('job')
+    render(
+      <TooltipProvider>
+        <Inspector />
+      </TooltipProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run OCR for Hello' }))
+
+    await waitFor(() =>
+      expect(run).toHaveBeenCalledWith(
+        { scope: 'entities', value: ['element'] },
+        { operation: 'only', stage: 'ocr' },
+      ),
+    )
+  })
+
+  it('explains that source text must be empty before OCR', async () => {
+    installProject()
+    const run = vi.spyOn(commands, 'process').mockResolvedValue('job')
+    const warning = vi.spyOn(toast, 'add')
+    render(
+      <TooltipProvider>
+        <Inspector />
+      </TooltipProvider>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run OCR for Hello' }))
+
+    expect(run).not.toHaveBeenCalled()
+    expect(warning).toHaveBeenCalledWith({
+      type: 'warning',
+      title: 'OCR not run',
+      description: 'Clear source text before running OCR.',
+    })
   })
 
   it('shows actual layers with only the useful text-role distinction', () => {

@@ -215,6 +215,8 @@
     "zh-TW": "繁體中文"
   },
   "layers": {
+    "ocrBlocked": "OCR çalıştırılmadı",
+    "ocrRequiresEmptySource": "OCR'yi çalıştırmadan önce kaynak metni temizleyin.",
     "delete": "{{name}} öğesini sil",
     "edit": "{{name}} öğesini düzenle",
     "empty": "Bu sayfada katman yok.",
@@ -234,6 +236,7 @@
     "lockedLabel": "{{name}} kilitli",
     "moveDown": "{{name}} öğesini aşağı taşı",
     "moveUp": "{{name}} öğesini yukarı taşı",
+    "ocr": "{{name}} için OCR çalıştır",
     "opacityLabel": "{{name}} opaklığı",
     "originalArtwork": "Orijinal çizim",
     "show": "{{name}} öğesini göster",

@@ -215,6 +215,8 @@
     "zh-TW": "繁體中文"
   },
   "layers": {
+    "ocrBlocked": "OCR을 실행하지 않음",
+    "ocrRequiresEmptySource": "OCR을 실행하기 전에 원문 텍스트를 지워 주세요.",
     "delete": "{{name}} 삭제",
     "edit": "{{name}} 편집",
     "empty": "이 페이지에는 레이어가 없습니다.",
@@ -234,6 +236,7 @@
     "lockedLabel": "{{name}}이(가) 잠겨 있습니다",
     "moveDown": "{{name}} 아래로 이동",
     "moveUp": "{{name}} 위로 이동",
+    "ocr": "{{name}} OCR 실행",
     "opacityLabel": "{{name}} 불투명도",
     "originalArtwork": "원본 아트워크",
     "show": "{{name}} 표시",

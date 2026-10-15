@@ -424,14 +424,8 @@ impl Project {
         let geometry = Self::geometry_from_frame(frame)?;
         let mut layer = None;
         let patch = snapshot.patch(|edit| {
+            // No source text yet, so OCR on the new frame can fill it.
             let content = edit.add_text_content(page, At::End)?;
-            edit.set(
-                content,
-                &SceneSourceText {
-                    text: Authored::user(String::new()),
-                    language: None,
-                },
-            )?;
             let added_layer = edit.add_text_layer(
                 page,
                 At::End,
@@ -485,6 +479,11 @@ impl Project {
         let patch = snapshot.patch(|edit| {
             edit.promote_entity_to_user(layer)?;
             edit.promote_entity_to_user(content)?;
+            // Clearing the field gives it back to OCR; an empty user-owned value would
+            // block every later OCR run on this text.
+            if text.trim().is_empty() {
+                return edit.remove::<SceneSourceText>(content);
+            }
             edit.set(
                 content,
                 &SceneSourceText {

@@ -215,6 +215,8 @@
     "zh-TW": "繁體中文"
   },
   "layers": {
+    "ocrBlocked": "OCRを実行しませんでした",
+    "ocrRequiresEmptySource": "OCRを実行する前に原文を消去してください。",
     "delete": "{{name}}を削除",
     "edit": "{{name}}を編集",
     "empty": "このページにはレイヤーがありません。",
@@ -234,6 +236,7 @@
     "lockedLabel": "{{name}}はロックされています",
     "moveDown": "{{name}}を下へ移動",
     "moveUp": "{{name}}を上へ移動",
+    "ocr": "{{name}}のOCRを実行",
     "opacityLabel": "{{name}}の不透明度",
     "originalArtwork": "元のアートワーク",
     "show": "{{name}}を表示",

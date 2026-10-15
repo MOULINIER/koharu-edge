@@ -215,6 +215,8 @@
     "zh-TW": "繁體中文"
   },
   "layers": {
+    "ocrBlocked": "未執行 OCR",
+    "ocrRequiresEmptySource": "執行 OCR 前請清空來源文字。",
     "delete": "刪除 {{name}}",
     "edit": "編輯 {{name}}",
     "empty": "此頁面沒有圖層。",
@@ -234,6 +236,7 @@
     "lockedLabel": "{{name}} 已鎖定",
     "moveDown": "下移 {{name}}",
     "moveUp": "上移 {{name}}",
+    "ocr": "對 {{name}} 執行 OCR",
     "opacityLabel": "{{name}} 不透明度",
     "originalArtwork": "原始圖稿",
     "show": "顯示 {{name}}",

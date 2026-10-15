@@ -215,6 +215,8 @@
     "zh-TW": "繁體中文"
   },
   "layers": {
+    "ocrBlocked": "OCR не запущен",
+    "ocrRequiresEmptySource": "Очистите исходный текст перед запуском OCR.",
     "delete": "Удалить {{name}}",
     "edit": "Изменить {{name}}",
     "empty": "На этой странице нет слоёв.",
@@ -234,6 +236,7 @@
     "lockedLabel": "{{name}} заблокирован",
     "moveDown": "Переместить {{name}} вниз",
     "moveUp": "Переместить {{name}} вверх",
+    "ocr": "Запустить OCR для {{name}}",
     "opacityLabel": "Непрозрачность {{name}}",
     "originalArtwork": "Исходное изображение",
     "show": "Показать {{name}}",

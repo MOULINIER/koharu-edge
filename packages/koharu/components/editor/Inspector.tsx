@@ -20,6 +20,7 @@ import {
   Minus,
   Plus,
   RotateCcw,
+  ScanText,
   Trash2,
   Type,
 } from 'lucide-react'
@@ -74,6 +75,7 @@ import {
   SelectValue,
 } from '@koharu/ui/components/select'
 import { Slider } from '@koharu/ui/components/slider'
+import { toast } from '@koharu/ui/components/toast'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@koharu/ui/components/tooltip'
 
 const defaultFont: FontFamily = {
@@ -1007,7 +1009,13 @@ function LayerRow({
 function LayerEditor({ layer, onDelete }: { layer: Layer; onDelete?: () => void }) {
   const { t } = useTranslation()
   const name = localizedLayerName(layer, 0, t)
+  const jobs = useKoharuStore((state) => state.jobs)
   const [opacity, setOpacity] = useState(layer.visibility.opacity * 100)
+  const running = Object.values(jobs).some((job) => job.state === 'running')
+  const canResetTextFrame = Boolean(isTextLayer(layer) && layer.automatic_region && layer.geometry)
+  const ocrTarget =
+    isTextLayer(layer) && (layer.automatic_region || layer.geometry) ? layer.id : null
+  const hasSourceText = Boolean(isTextLayer(layer) && layer.content.source?.text.trim())
 
   useEffect(() => {
     setOpacity(layer.visibility.opacity * 100)
@@ -1028,10 +1036,27 @@ function LayerEditor({ layer, onDelete }: { layer: Layer; onDelete?: () => void 
   }
 
   const resetTextFrame = () => {
-    if (!isTextLayer(layer) || !layer.automatic_region || !layer.geometry) return
+    if (!canResetTextFrame) return
     void call(commands.setGeometry, [{ layer: layer.id, points: null }])
       .then(() => refresh(projectKey, pageKey))
       .catch(() => undefined)
+  }
+
+  const runOcr = () => {
+    if (!ocrTarget || running) return
+    if (hasSourceText) {
+      toast.add({
+        type: 'warning',
+        title: t('layers.ocrBlocked'),
+        description: t('layers.ocrRequiresEmptySource'),
+      })
+      return
+    }
+    void call(
+      commands.process,
+      { scope: 'entities', value: [ocrTarget] },
+      { operation: 'only', stage: 'ocr' },
+    ).catch(() => undefined)
   }
 
   return (
@@ -1091,7 +1116,7 @@ function LayerEditor({ layer, onDelete }: { layer: Layer; onDelete?: () => void 
                   ? t('inspector.autoFit')
                   : t('inspector.unplaced')}
             </span>
-            {layer.geometry && layer.automatic_region && (
+            {canResetTextFrame && (
               <Tooltip>
                 <TooltipTrigger
                   render={
@@ -1109,6 +1134,27 @@ function LayerEditor({ layer, onDelete }: { layer: Layer; onDelete?: () => void 
                   {t('common.reset')}
                 </TooltipTrigger>
                 <TooltipContent side='left'>{t('inspector.resetAutoFit')}</TooltipContent>
+              </Tooltip>
+            )}
+            {ocrTarget && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='xs'
+                      disabled={running}
+                      aria-label={t('layers.ocr', { name })}
+                      className={`${canResetTextFrame ? '' : 'ml-auto '}h-5 gap-1 rounded-md px-1.5 text-[9px] font-normal text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-40`}
+                      onClick={runOcr}
+                    />
+                  }
+                >
+                  <ScanText className='size-3' />
+                  OCR
+                </TooltipTrigger>
+                <TooltipContent side='left'>{t('layers.ocr', { name })}</TooltipContent>
               </Tooltip>
             )}
           </div>
