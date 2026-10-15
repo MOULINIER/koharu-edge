@@ -2,7 +2,7 @@
 
 # CLAUDE.md
 
-The imported `AGENTS.md` holds the binding project rules: no backward compatibility, ML port and upstream alignment, performance, and verification scope. This file adds working context. `packages/koharu/CLAUDE.md` adds rules for the Next.js frontend.
+The imported `AGENTS.md` holds the binding project rules: no backward compatibility, ML port and upstream alignment, performance, and verification scope. This file adds working context.
 
 ## Overview
 
@@ -44,7 +44,7 @@ ML models each have a CLI in `crates/koharu-ml/src/bin/<model>.rs`, for example 
 
 Crate READMEs are authoritative and detailed. Read the one for any crate you touch.
 
-- `koharu` is the binary: startup, diagnostics (tracing, sentry, panic), and Tauri config (`tauri*.conf.json`, `capabilities/`). It composes `koharu-app` and `koharu-desktop`.
+- `koharu` is the binary: startup, diagnostics (tracing, Sentry, panic), and Tauri config (`tauri*.conf.json`, `capabilities/`). It composes `koharu-app` and `koharu-desktop`.
 - `koharu-app` holds Tauri-managed state and one named command per operation (`src/commands/`). Mutating commands take a project id and the current revision, and the frontend serializes those mutations. Updates go out on independent typed channels, with no shared event envelope. **Rust command signatures are the frontend contract.** tauri-specta generates `packages/bridge/src/protocol.ts` from them.
 - `koharu-scene` is the canonical in-memory document. It has three layers: a kernel (identity, hierarchy, revisioned components, patches, undo), a document schema, and an editor facade. `koharu-storage` persists only opaque snapshots plus BLAKE3 content-addressed blobs in a `.khrproj` directory.
 - `koharu-pipeline` runs detect → OCR → translate → inpaint, one stage per page. It commits each stage through the caller's `Committer`, so stale or overlapping writes fail conflict validation.
@@ -54,9 +54,9 @@ Crate READMEs are authoritative and detailed. Read the one for any crate you tou
   - `koharu-torch(-sys)`, `koharu-llama(-sys)`, `koharu-diffusion(-sys)` split each library into raw bindings and a safe API.
   - `koharu-bindgen` generates the dynamic-loading bindings from `build.rs`.
   - `koharu-runtime` discovers, downloads and loads the native runtime packages. They are cached under the OS cache dir.
-- `koharu-translator` holds local GGUF and hosted provider backends, and each provider owns its own config and defaults. Credentials live in the OS keychain (`koharu-secrets`), never in config (`koharu-config`). `koharu-agent` orchestrates OAuth-backed Codex agents. `koharu-metrics` turns tracing events into anonymous analytics.
+- `koharu-translator` holds local GGUF and hosted provider backends, and each provider owns its own config and defaults. Credentials live in the OS keychain (`koharu-secrets`), never in config (`koharu-config`). `koharu-agent` orchestrates OAuth-backed Codex agents.
 - Frontend packages:
-  - `packages/koharu` (`@koharu/app`) is the Next.js app. It has `app/`, `components/`, `lib/` (zustand store, react-query queries, backend helpers), and vitest tests under `tests/`.
+  - `packages/koharu` (`@koharu/app`) is the Next.js app. It has `app/`, `components/`, `lib/` (zustand store, react-query queries, backend helpers), and vitest tests under `tests/`. Frontend Sentry is initialized in `instrumentation-client.ts` and `app/global-error.tsx`.
   - `packages/ui` is the shared shadcn component library (`bun run shadcn` overwrites it).
   - `packages/bridge` contains `protocol.ts` (generated), `canvas.ts` (hand-written adapter) and `src/wasm` (derived, gitignored).
   - `packages/docs` is the Mintlify site (en/ja/zh).
@@ -67,7 +67,7 @@ Crate READMEs are authoritative and detailed. Read the one for any crate you tou
 - Rust uses `anyhow` with `.context(...)` in binaries and orchestration. Most library crates define `thiserror` errors. Formatting is default rustfmt with 4-space indents. Clippy must pass with `-D warnings`.
 - Rust tests are inline `#[cfg(test)] mod tests` blocks, plus `tests/` in `koharu-renderer` and `koharu-rasterizer`, and criterion `benches/` in scene, storage, renderer and ml. Tests that download checkpoints or need LibTorch use `#[ignore = "reason"]`. Don't run those unless asked.
 - TS/TSX style (enforced by oxfmt): no semicolons, single quotes (in JSX too), 2-space indents. Imports are sorted and grouped builtin/external/internal (`@/`, `@koharu/`)/relative, with blank lines between groups. Tailwind classes are sorted inside `cn`/`clsx`/`cva`/`tw`.
-- Commits follow Conventional Commits with scopes, for example `fix(renderer): ...`, `feat(ui): ...`, `chore(deps): ...`. git-cliff builds `CHANGELOG.md` from them, and `scripts/release.ts` bumps `[workspace.package].version` (`chore(release): x.y.z`). PRs use the template (Summary + Test plan) and must disclose substantial AI help (see `CONTRIBUTING.md`).
+- Commits follow Conventional Commits with scopes, for example `fix(renderer): ...`, `feat(ui): ...`, `chore(deps): ...`. Release Please (`.github/release-please/`, `release-pr.yml` workflow) opens the release PR. It bumps `[workspace.package].version` and has git-cliff build `CHANGELOG.md` from the commits. PRs use the template (Summary + Test plan) and must disclose substantial AI help (see `CONTRIBUTING.md`).
 - Put new dependency versions in `[workspace.dependencies]` and reference them with `{ workspace = true }`.
 
 ## Gotchas
@@ -82,7 +82,7 @@ Crate READMEs are authoritative and detailed. Read the one for any crate you tou
 - Changes to `koharu-canvas` or `koharu-rasterizer` reach the UI only after the bridge WASM is rebuilt. `bun dev` watches these with nodemon. Vitest aliases `koharu_canvas.js` to `tests/mocks/koharu_canvas.ts`, so UI tests never exercise the real WASM.
 - Several pins are exact and should move together: `tauri*` and `@tauri-apps/*` (3.0.0-alpha), `specta`/`specta-typescript`, and a forked `tauri-specta` git tag. `hf-hub` tracks git `main`.
 - `koharu-canvas` only has real dependencies on `wasm32`. Checking it natively compiles almost nothing, so build it with the bridge build (wasm-pack) instead.
-- `next dev` rewrites the Next.js block in `packages/koharu/AGENTS.md`. Commit that diff rather than fighting it. This Next.js version differs from training data, so read `node_modules/next/dist/docs/` before writing Next code.
+- When `next dev` detects an AI agent, it may generate `packages/koharu/AGENTS.md` and `packages/koharu/CLAUDE.md`. Upstream deleted these files on purpose, so don't commit them. This Next.js version differs from training data, so read `node_modules/next/dist/docs/` before writing Next code.
 - Debug builds expose CEF DevTools on `127.0.0.1:4000` (`crates/koharu-app/src/app.rs`).
 - Linux builds need GTK 4 and friends (see the `apt install` list in `.github/workflows/lint.yml`). The Rust tests in CI also need `fonts-noto-cjk`, `dbus-x11` and `gnome-keyring`, because renderer tests use CJK fonts and the secrets tests use the keyring.
 - `.cargo/config.toml` sets `CARGO_WORKSPACE_DIR` to the repo root. Dev profile builds image/codec/canvas/rasterizer crates at `opt-level = 3`, so the first debug build is slower than expected.
