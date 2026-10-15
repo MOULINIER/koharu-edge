@@ -30,6 +30,20 @@ Koharu introduces a local-first workflow for manga translation, utilizing the po
 > [!NOTE]
 > Join our [Discord server](https://discord.gg/mHvHkxGnUY) for support and discussion.
 
+## About this fork
+
+This is a personal fork of [koharu-rs/koharu](https://github.com/koharu-rs/koharu). It follows upstream `main` and adds fixes and features that are not, or not yet, in upstream, mostly pull requests that are still waiting for review or were closed there. Every adopted pull request is reviewed and often corrected before it lands here. Each one is a single commit, titled `(upstream #N)`. When upstream merges its own version, that version replaces ours.
+
+| Change | Source | Notes |
+| --- | --- | --- |
+| Merge nested text detections into one paragraph | [#1070](https://github.com/koharu-rs/koharu/pull/1070) | As submitted |
+| Recent colors in the color picker | [#989](https://github.com/koharu-rs/koharu/pull/989) | The hex field no longer records partial input |
+| Drag and drop to reorder layers | [#959](https://github.com/koharu-rs/koharu/pull/959) | Fixed off-by-one root drops and shifting layer names |
+| OCR a single text frame, including hand-drawn frames | [#1065](https://github.com/koharu-rs/koharu/pull/1065) | Pipeline reworked: no double OCR, and frames moved after OCR are read at their new position |
+| `bun dev` frees only port 3000 | Fork | `kill-port` also killed listeners on 30000+ on Windows |
+
+Bugs that come from the changes above belong here, not upstream.
+
 ## Features
 
 - [Multi-format project management](https://koharu.rs/guides/projects) for raster images, archives, and PDFs with page sequencing
