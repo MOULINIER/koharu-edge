@@ -274,6 +274,19 @@ impl Project {
         let session = Session::open(&path)
             .await
             .with_context(|| format!("failed to open {}", path.display()))?;
+        // Edits leave superseded blobs behind. Nothing is undoable yet, so this is the
+        // point where only the two saved states still need theirs.
+        match session.collect_garbage().await {
+            Ok(report) if report.blobs > 0 => {
+                tracing::info!(
+                    blobs = report.blobs,
+                    bytes = report.bytes,
+                    "reclaimed unused project data"
+                );
+            }
+            Ok(_) => {}
+            Err(error) => tracing::warn!(%error, "could not reclaim unused project data"),
+        }
         Ok(Self::new(session, name))
     }
 

@@ -228,10 +228,13 @@ impl Session {
         let _writer = self.inner.writer.lock().await;
         let root = self.inner.root.clone();
         let store = self.inner.blobs.clone();
+        let head = self.inner.head.read().stored.blobs.clone();
         tokio::task::spawn_blocking(move || {
-            let mut saved = BTreeSet::new();
+            let mut saved = head.into_iter().collect::<BTreeSet<_>>();
+            // A slot that cannot be read must stop collection: its blobs would
+            // otherwise look unreferenced and be deleted.
             for slot in [Slot::A, Slot::B] {
-                if let Ok(Some(state)) = format::load(&root, slot) {
+                if let Some(state) = format::load(&root, slot)? {
                     saved.extend(state.blobs);
                 }
             }

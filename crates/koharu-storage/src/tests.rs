@@ -159,3 +159,27 @@ async fn rejects_stale_saves() {
         Err(Error::RevisionConflict { .. })
     ));
 }
+
+#[tokio::test]
+async fn garbage_collection_stops_when_a_state_slot_is_unreadable() {
+    let root = tempfile::tempdir().unwrap();
+    let session = Session::create(root.path(), DocumentId::new(), Bytes::new())
+        .await
+        .unwrap();
+    let bytes = Bytes::from_static(b"retained");
+    let id = BlobId::for_bytes(&bytes);
+    let proposed = session
+        .load()
+        .await
+        .unwrap()
+        .update(Revision::new(1), Bytes::new(), [id], [(id, bytes)])
+        .unwrap();
+    session.save(&proposed).await.unwrap();
+    drop(proposed);
+
+    // The head state is slot B; tearing the other slot must not let GC treat blobs
+    // that only it could reference as unreferenced.
+    fs::write(root.path().join("state-a.khr"), b"torn").unwrap();
+    assert!(session.collect_garbage().await.is_err());
+    assert!(blob_path(root.path(), id).exists());
+}
