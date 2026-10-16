@@ -107,6 +107,22 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      # CEF 154 no longer ships ANGLE (libEGL, libGLESv2) on Linux or Windows, but the
+      # pinned Tauri bundler still copies both into .deb/.rpm/NSIS/MSI packages and fails
+      # on the missing files. Reinstall the CLI from the same rev without those entries;
+      # drop this step once Tauri fixes the lists.
+      - name: Patch the Tauri CLI bundler for CEF 154
+        if: ${{ !startsWith(matrix.platform, 'macos') }}
+        shell: bash
+        run: |
+          rev=$(grep -o -- '--rev [0-9a-f]*' package.json | cut -d' ' -f2)
+          git clone --filter=blob:none https://github.com/tauri-apps/tauri "$RUNNER_TEMP/tauri"
+          git -C "$RUNNER_TEMP/tauri" checkout "$rev"
+          bundle="$RUNNER_TEMP/tauri/crates/tauri-bundler/src/bundle"
+          sed -i -E '/"lib(EGL|GLESv2)\.(so|dll)",/d' \
+            "$bundle"/linux/{debian,rpm}.rs "$bundle"/windows/{nsis,msi}/mod.rs
+          cargo install --path "$RUNNER_TEMP/tauri/crates/tauri-cli" --locked --force
+
       - name: Release metadata
         id: meta
         shell: bash
