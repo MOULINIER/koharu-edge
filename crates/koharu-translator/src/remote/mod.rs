@@ -135,11 +135,14 @@ pub(super) async fn send_json<T: DeserializeOwned>(
     let response = request
         .send()
         .await
+        // reqwest prints the request URL in its error; keep it out of messages and logs.
+        .map_err(reqwest::Error::without_url)
         .with_context(|| format!("{provider} request failed"))?;
     let status = response.status();
     let text = response
         .text()
         .await
+        .map_err(reqwest::Error::without_url)
         .with_context(|| format!("failed to read {provider} response"))?;
 
     if !status.is_success() {
@@ -162,4 +165,21 @@ pub(super) async fn send_json<T: DeserializeOwned>(
     serde_json::from_str(&text)
         .with_context(|| format!("failed to decode {provider} response"))
         .map_err(Into::into)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn transport_errors_do_not_expose_the_request_url() {
+        let error = send_json::<serde_json::Value>(
+            "test",
+            Client::new().get("http://127.0.0.1:1/path?key=secret-key"),
+        )
+        .await
+        .expect_err("nothing listens on port 1");
+
+        assert!(!format!("{error:#}").contains("secret-key"), "{error:#}");
+    }
 }

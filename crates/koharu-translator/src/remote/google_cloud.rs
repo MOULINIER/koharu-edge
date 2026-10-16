@@ -5,7 +5,6 @@ use anyhow::Context;
 use koharu_secrets::ExposeSecret;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use url::Url;
 
 use super::send_json;
 use crate::{Model, Provider, Result, TranslationRequest};
@@ -36,17 +35,19 @@ pub(super) async fn translate(
 ) -> Result<Vec<String>> {
     let api_key = koharu_secrets::get("google-cloud-translation")?
         .context("google-cloud-translation API key is not configured")?;
-    let mut url = Url::parse(URL).expect("Google API URL is valid");
-    url.query_pairs_mut()
-        .append_pair("key", api_key.expose_secret());
+    // The key travels in a header: reqwest prints the request URL in transport errors,
+    // which would put a query-string key into error messages and logs.
     let response: Response = send_json(
         "google-cloud-translation",
-        client.post(url).json(&Request {
-            q: &request.segments,
-            target: request.target_language.tag(),
-            source: request.source_language.map(|language| language.tag()),
-            format: "text",
-        }),
+        client
+            .post(URL)
+            .header("x-goog-api-key", api_key.expose_secret())
+            .json(&Request {
+                q: &request.segments,
+                target: request.target_language.tag(),
+                source: request.source_language.map(|language| language.tag()),
+                format: "text",
+            }),
     )
     .await?;
     Ok(response

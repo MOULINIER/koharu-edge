@@ -132,7 +132,10 @@ impl CredentialInput {
         if self.clear {
             koharu_secrets::delete(key)?;
         } else if let Some(value) = self.value {
-            if value.trim().is_empty() {
+            // A pasted key often carries a trailing newline or space, which is not a
+            // valid header value.
+            let value = value.trim();
+            if value.is_empty() {
                 koharu_secrets::delete(key)?;
             } else {
                 koharu_secrets::set(key, &value.into())?;
