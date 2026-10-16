@@ -44,6 +44,8 @@ import { Button } from '@koharu/ui/components/button'
 
 const BRUSH_DIAMETER_STEP = 4
 
+const textEntryInputTypes = new Set(['text', 'search', 'url', 'tel', 'email', 'password', 'number'])
+
 const canvasCursors = {
   select: undefined,
   text: 'text',
@@ -324,14 +326,26 @@ export function CanvasWorkspace() {
   useEffect(() => cancelGesture, [cancelGesture, canvasGeneration, canvasRevision, page?.id, tool])
 
   useEffect(() => {
-    const editable = (target: EventTarget | null) =>
-      target instanceof HTMLInputElement ||
+    // Only fields with their own text history keep Ctrl+Z. Sliders, checkboxes and radios
+    // stay focused after a commit but have nothing to undo natively, so the project owns it.
+    const ownsUndo = (target: EventTarget | null) =>
+      (target instanceof HTMLInputElement && textEntryInputTypes.has(target.type)) ||
       target instanceof HTMLTextAreaElement ||
       (target instanceof HTMLElement && target.isContentEditable)
+    const editable = (target: EventTarget | null) =>
+      target instanceof HTMLInputElement || ownsUndo(target)
 
     const down = (event: KeyboardEvent) => {
       if (event.key === 'Alt') {
         event.preventDefault()
+        return
+      }
+      const command = event.ctrlKey || event.metaKey
+      if (command && event.key.toLowerCase() === 'z' && !ownsUndo(event.target)) {
+        event.preventDefault()
+        void call(event.shiftKey ? commands.redo : commands.undo)
+          .then(() => refresh(projectKey, pagesKey, pageKey))
+          .catch(() => undefined)
         return
       }
       if (editable(event.target)) return
@@ -339,14 +353,6 @@ export function CanvasWorkspace() {
       if (event.code === 'Space') {
         spaceHeld.current = true
         event.preventDefault()
-        return
-      }
-      const command = event.ctrlKey || event.metaKey
-      if (command && event.key.toLowerCase() === 'z') {
-        event.preventDefault()
-        void call(event.shiftKey ? commands.redo : commands.undo)
-          .then(() => refresh(projectKey, pagesKey, pageKey))
-          .catch(() => undefined)
         return
       }
       if (command && event.key.toLowerCase() === 'a' && page) {

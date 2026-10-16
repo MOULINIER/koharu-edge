@@ -209,6 +209,42 @@ describe('canvas interaction adapter', () => {
     input.remove()
   })
 
+  it('undoes from a focused slider but leaves Ctrl+Z to text fields', async () => {
+    installProject()
+    renderWorkspace()
+    const undo = vi.spyOn(commands, 'undo').mockResolvedValue(undefined as never)
+    const slider = document.createElement('input')
+    slider.type = 'range'
+    const text = document.createElement('input')
+    text.type = 'text'
+    document.body.append(slider, text)
+
+    slider.focus()
+    const fromSlider = new KeyboardEvent('keydown', {
+      key: 'z',
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    })
+    slider.dispatchEvent(fromSlider)
+    await waitFor(() => expect(undo).toHaveBeenCalledTimes(1))
+    expect(fromSlider.defaultPrevented).toBe(true)
+
+    text.focus()
+    const fromText = new KeyboardEvent('keydown', {
+      key: 'z',
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    })
+    text.dispatchEvent(fromText)
+    expect(undo).toHaveBeenCalledTimes(1)
+    expect(fromText.defaultPrevented).toBe(false)
+
+    slider.remove()
+    text.remove()
+  })
+
   it('announces WebGPU startup failures and offers recovery', () => {
     installProject()
     canvasState.status = 'error'
