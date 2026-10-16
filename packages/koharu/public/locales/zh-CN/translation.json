@@ -76,7 +76,7 @@
     "reset": "重置"
   },
   "errors": {
-    "fatalTitle": "Koharu 无法继续运行",
+    "fatalTitle": "Koharu Edge 无法继续运行",
     "tryAgain": "重试"
   },
   "fontPicker": {
@@ -495,9 +495,9 @@
   },
   "startup": {
     "description": "正在加载本地 AI 运行时并准备工作区。首次启动可能需要一些时间。",
-    "opening": "正在打开 Koharu…",
+    "opening": "正在打开 Koharu Edge…",
     "status": "正在初始化本地运行时",
-    "title": "正在准备 Koharu"
+    "title": "正在准备 Koharu Edge"
   },
   "status": {
     "zoom": "缩放"
@@ -519,12 +519,12 @@
   },
   "updater": {
     "available": {
-      "description": "Koharu <strong>{{version}}</strong> 已准备好安装",
+      "description": "Koharu Edge <strong>{{version}}</strong> 已准备好安装",
       "title": "有可用更新"
     },
     "close": "关闭",
     "downloading": {
-      "subtitle": "Koharu {{version}}",
+      "subtitle": "Koharu Edge {{version}}",
       "title": "正在下载更新…"
     },
     "error": {

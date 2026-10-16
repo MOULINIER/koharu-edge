@@ -76,7 +76,7 @@
     "reset": "リセット"
   },
   "errors": {
-    "fatalTitle": "Koharuを続行できませんでした",
+    "fatalTitle": "Koharu Edgeを続行できませんでした",
     "tryAgain": "再試行"
   },
   "fontPicker": {
@@ -247,7 +247,7 @@
     "translationLabel": "{{name}}の翻訳"
   },
   "menu": {
-    "about": "Koharuについて",
+    "about": "Koharu Edgeについて",
     "closeProject": "プロジェクトを閉じる",
     "delete": "選択項目を削除",
     "discord": "Discord",
@@ -495,9 +495,9 @@
   },
   "startup": {
     "description": "ローカル AI ランタイムを読み込み、ワークスペースを準備しています。初回起動には少し時間がかかる場合があります。",
-    "opening": "Koharuを起動中…",
+    "opening": "Koharu Edgeを起動中…",
     "status": "ローカルランタイムを初期化しています",
-    "title": "Koharu を準備しています"
+    "title": "Koharu Edge を準備しています"
   },
   "status": {
     "zoom": "ズーム"
@@ -519,12 +519,12 @@
   },
   "updater": {
     "available": {
-      "description": "Koharu <strong>{{version}}</strong> をインストールできます",
+      "description": "Koharu Edge <strong>{{version}}</strong> をインストールできます",
       "title": "アップデートが利用可能"
     },
     "close": "閉じる",
     "downloading": {
-      "subtitle": "Koharu {{version}}",
+      "subtitle": "Koharu Edge {{version}}",
       "title": "アップデートをダウンロード中…"
     },
     "error": {

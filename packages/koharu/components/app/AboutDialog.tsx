@@ -48,7 +48,7 @@ export function AboutDialog({
             <Image src='/icon.png' alt='' width={30} height={30} priority />
           </div>
           <DialogHeader className='min-w-0 gap-1'>
-            <DialogTitle className='text-[15px]'>Koharu</DialogTitle>
+            <DialogTitle className='text-[15px]'>Koharu Edge</DialogTitle>
             <DialogDescription className='text-[11px]'>{t('about.description')}</DialogDescription>
           </DialogHeader>
         </div>

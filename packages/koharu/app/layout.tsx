@@ -12,7 +12,7 @@ const notoSansCJK = localFont({
 })
 
 export const metadata: Metadata = {
-  title: 'Koharu',
+  title: 'Koharu Edge',
 }
 
 function RootLayout({

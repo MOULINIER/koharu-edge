@@ -76,7 +76,7 @@
     "reset": "Reset"
   },
   "errors": {
-    "fatalTitle": "Koharu could not continue",
+    "fatalTitle": "Koharu Edge could not continue",
     "tryAgain": "Try again"
   },
   "fontPicker": {
@@ -495,9 +495,9 @@
   },
   "startup": {
     "description": "Loading local AI runtimes and preparing the workspace. First launch can take a moment.",
-    "opening": "Opening Koharu…",
+    "opening": "Opening Koharu Edge…",
     "status": "Initializing local runtimes",
-    "title": "Preparing Koharu"
+    "title": "Preparing Koharu Edge"
   },
   "status": {
     "zoom": "Zoom"
@@ -519,12 +519,12 @@
   },
   "updater": {
     "available": {
-      "description": "Koharu <strong>{{version}}</strong> is ready to install",
+      "description": "Koharu Edge <strong>{{version}}</strong> is ready to install",
       "title": "Update available"
     },
     "close": "Close",
     "downloading": {
-      "subtitle": "Koharu {{version}}",
+      "subtitle": "Koharu Edge {{version}}",
       "title": "Downloading update…"
     },
     "error": {

@@ -76,7 +76,7 @@
     "reset": "Сбросить"
   },
   "errors": {
-    "fatalTitle": "Koharu не может продолжить работу",
+    "fatalTitle": "Koharu Edge не может продолжить работу",
     "tryAgain": "Повторить"
   },
   "fontPicker": {
@@ -495,9 +495,9 @@
   },
   "startup": {
     "description": "Загрузка локальных сред выполнения ИИ и подготовка рабочего пространства. Первый запуск может занять некоторое время.",
-    "opening": "Запуск Koharu…",
+    "opening": "Запуск Koharu Edge…",
     "status": "Инициализация локальных сред выполнения",
-    "title": "Подготовка Koharu"
+    "title": "Подготовка Koharu Edge"
   },
   "status": {
     "zoom": "Масштаб"
@@ -519,12 +519,12 @@
   },
   "updater": {
     "available": {
-      "description": "Koharu <strong>{{version}}</strong> готов к установке",
+      "description": "Koharu Edge <strong>{{version}}</strong> готов к установке",
       "title": "Доступно обновление"
     },
     "close": "Закрыть",
     "downloading": {
-      "subtitle": "Koharu {{version}}",
+      "subtitle": "Koharu Edge {{version}}",
       "title": "Загрузка обновления…"
     },
     "error": {

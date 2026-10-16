@@ -76,7 +76,7 @@
     "reset": "Sıfırla"
   },
   "errors": {
-    "fatalTitle": "Koharu devam edemedi",
+    "fatalTitle": "Koharu Edge devam edemedi",
     "tryAgain": "Tekrar dene"
   },
   "fontPicker": {
@@ -495,9 +495,9 @@
   },
   "startup": {
     "description": "Yerel yapay zekâ çalışma zamanları yükleniyor ve çalışma alanı hazırlanıyor. İlk açılış biraz sürebilir.",
-    "opening": "Koharu açılıyor…",
+    "opening": "Koharu Edge açılıyor…",
     "status": "Yerel çalışma zamanları başlatılıyor",
-    "title": "Koharu hazırlanıyor"
+    "title": "Koharu Edge hazırlanıyor"
   },
   "status": {
     "zoom": "Yakınlaştırma"
@@ -519,12 +519,12 @@
   },
   "updater": {
     "available": {
-      "description": "Koharu <strong>{{version}}</strong> yüklenmeye hazır",
+      "description": "Koharu Edge <strong>{{version}}</strong> yüklenmeye hazır",
       "title": "Güncelleme mevcut"
     },
     "close": "Kapat",
     "downloading": {
-      "subtitle": "Koharu {{version}}",
+      "subtitle": "Koharu Edge {{version}}",
       "title": "Güncelleme indiriliyor…"
     },
     "error": {

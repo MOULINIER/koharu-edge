@@ -104,7 +104,9 @@ This repository is Koharu Edge, a fork of Koharu. `origin` is `MOULINIER/koharu-
 - **App identity:** Koharu Edge is a separate app. Keep these as the fork sets them when upstream changes nearby lines:
   - the `productName`, `identifier` and window titles in `crates/koharu/tauri*.conf.json`;
   - the updater `pubkey` and `endpoints`, which point at Edge's own releases;
-  - the GitHub link in `TitleBar.tsx`.
+  - the GitHub link in `TitleBar.tsx`;
+  - the badged "EDGE" icons (`crates/koharu/icons/`, `packages/koharu/app/icon.png`, `packages/koharu/public/icon*.png`). When upstream changes its logo, rebadge the new one and regenerate the set with `cargo tauri icon` (delete the `android/` and `ios/` output). `tauri-build` doesn't watch the icons, so touch `crates/koharu/tauri.conf.json` afterwards or the debug exe keeps the old embedded icon;
+  - the "Koharu Edge" name where it names the running app: page title, title bar, startup screen, About dialog, panic dialog, and the startup, fatal-error, updater and (ja) About strings in every locale. Text about the agent, the shared `.khrproj` format and the shared settings keeps "Koharu".
 
   Settings, models, keychain and projects use hardcoded `koharu` paths, so they're shared with upstream Koharu on purpose.
 - **Releases:**
