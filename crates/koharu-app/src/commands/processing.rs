@@ -198,12 +198,23 @@ pub(crate) async fn process(
         let mut committer = PipelineCommitter {
             handle: task_handle.clone(),
         };
-        let result = pipeline.execute(snapshot, request, &mut committer).await;
+        // Run in its own task so a panic (native inference code can panic) surfaces as a
+        // failed job instead of leaving the job registered and blocking every later run.
+        let result =
+            tokio::spawn(async move { pipeline.execute(snapshot, request, &mut committer).await })
+                .await;
         let (stopped, error) = match result {
-            Ok(report) => (report.status == RunStatus::Stopped, None),
-            Err(error) => {
+            Ok(Ok(report)) => (report.status == RunStatus::Stopped, None),
+            Ok(Err(error)) => {
                 tracing::error!(stage = ?error.stage, %error, "processing failed");
                 (false, Some(format!("{error:#}")))
+            }
+            Err(error) => {
+                tracing::error!(%error, "processing task terminated unexpectedly");
+                (
+                    false,
+                    Some(format!("processing terminated unexpectedly: {error}")),
+                )
             }
         };
         task_handle.state::<Processing>().stops.lock().remove(&id);
