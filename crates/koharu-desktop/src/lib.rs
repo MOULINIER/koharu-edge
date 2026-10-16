@@ -117,8 +117,11 @@ impl Desktop {
             .map_err(Into::into)
     }
 
+    /// Caches a frame without touching the presentation. Prefetching joins the current
+    /// request instead of starting a new one, so it yields to any later `synchronize`,
+    /// `show_page` or `clear` but can never cancel one that is already running.
     pub async fn prepare_page(&self, snapshot: &Snapshot, page: EntityId) -> Result<bool> {
-        let request = self.request_preparation();
+        let request = self.presentation.read().requested_preparation;
         let _preparation = self.preparation.lock().await;
         if !self.is_current_preparation(request) {
             return Ok(false);
@@ -577,6 +580,20 @@ mod tests {
                 .await,
             Some(7)
         );
+    }
+
+    #[tokio::test]
+    async fn prefetching_does_not_supersede_a_running_preparation() {
+        let desktop = Desktop::new().unwrap();
+        let running = desktop.request_preparation();
+        let snapshot = koharu_scene::Session::memory().await.unwrap().snapshot();
+        let page = koharu_scene::EntityId::new();
+
+        // The page does not exist, so this fails after taking the preparation lock; it
+        // must not have advanced the request counter on the way.
+        let _ = desktop.prepare_page(&snapshot, page).await;
+
+        assert!(desktop.is_current_preparation(running));
     }
 
     #[tokio::test]
