@@ -194,16 +194,16 @@ The executable is written to `target/release`.
 
 ## Sponsorship
 
-If Koharu is useful in your workflow, consider sponsoring the project.
+Koharu Edge is built on upstream Koharu. If it's useful to you, please support Koharu's author:
 
 - [GitHub Sponsors](https://github.com/sponsors/mayocream)
 - [Patreon](https://www.patreon.com/mayocream)
 
-![sponsors](./.github/sponsorkit/sponsors.svg)
+![sponsors](https://raw.githubusercontent.com/koharu-rs/koharu/main/.github/sponsorkit/sponsors.svg)
 
 ## Contributors ❤️
 
-Thanks to all the contributors who have helped make Koharu better!
+Thanks to everyone who has contributed to Koharu!
 
 <a href="https://github.com/koharu-rs/koharu/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=koharu-rs/koharu" />
@@ -215,3 +215,5 @@ Copyright 2025-2026 Mayo Takanashi and Koharu contributors.
 
 Koharu is dual-licensed under the [MIT License](LICENSE-MIT) or the
 [Apache License, Version 2.0](LICENSE-APACHE), at your option.
+Koharu Edge is distributed under the same terms, and changes made in this fork
+are licensed the same way.
