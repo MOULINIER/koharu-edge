@@ -72,9 +72,8 @@ fn decode(path: &Path, source: EncodedPage) -> Result<Page> {
 }
 
 pub(super) fn import(mut paths: Vec<PathBuf>) -> Result<Vec<Page>> {
-    alphanumeric_sort::sort_slice_by_os_str_key(&mut paths, |path| {
-        path.file_name().unwrap_or_else(|| path.as_os_str())
-    });
+    // Whole paths, so a folder import keeps each subfolder's pages together.
+    alphanumeric_sort::sort_path_slice(&mut paths);
     let mut groups = paths
         .into_par_iter()
         .map(|path| -> Result<Vec<Page>> {
@@ -115,7 +114,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn top_level_paths_are_naturally_sorted() {
+    fn paths_are_naturally_sorted_by_folder_then_name() {
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .expect("clock after epoch")
@@ -124,13 +123,20 @@ mod tests {
             "koharu-import-order-{}-{timestamp}",
             std::process::id()
         ));
-        fs::create_dir(&directory).expect("create fixture directory");
+        fs::create_dir_all(directory.join("ch2")).expect("create fixture directory");
+        fs::create_dir_all(directory.join("ch10")).expect("create fixture directory");
         let image = image::RgbaImage::from_pixel(1, 1, image::Rgba([0, 0, 0, 255]));
         let mut encoded = Cursor::new(Vec::new());
         image::DynamicImage::ImageRgba8(image)
             .write_to(&mut encoded, ImageFormat::Png)
             .expect("encode fixture");
-        let paths = ["page10.PNG", "page2.png", "page1.png"].map(|name| directory.join(name));
+        let paths = [
+            "ch10/page1.png",
+            "ch2/page2.png",
+            "ch2/page10.PNG",
+            "ch2/page1.png",
+        ]
+        .map(|name| directory.join(name));
         for path in &paths {
             fs::write(path, encoded.get_ref()).expect("write fixture");
         }
@@ -142,7 +148,7 @@ mod tests {
                 .iter()
                 .map(|page| page.name.as_str())
                 .collect::<Vec<_>>(),
-            ["page1.png", "page2.png", "page10.PNG"]
+            ["page1.png", "page2.png", "page10.PNG", "page1.png"]
         );
     }
 }
