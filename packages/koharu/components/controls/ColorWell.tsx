@@ -138,6 +138,22 @@ export function ColorWell(props: ColorWellProps) {
 // Mirrors `Palette::MAX_COLORS` in koharu-scene.
 const PALETTE_LIMIT = 32
 
+// Palette edits run one at a time, each against the backend's current palette, so quick
+// successive edits (or a stale render) cannot overwrite one another. `call` reports failures.
+let paletteEdits: Promise<void> = Promise.resolve()
+
+function editPalette(edit: (colors: string[]) => string[]) {
+  paletteEdits = paletteEdits
+    .then(async () => {
+      const project = await call(commands.getProject)
+      if (!project) return
+      const next = edit(project.palette.map(rgbToHex))
+      await call(commands.setPalette, [...new Set(next)].slice(0, PALETTE_LIMIT).map(hexToRgb))
+      await refresh(projectKey)
+    })
+    .catch(() => undefined)
+}
+
 // The open project's saved colors: click to apply, right-click to remove.
 function ProjectPalette({
   current,
@@ -150,10 +166,6 @@ function ProjectPalette({
   const project = useProject().data
   if (!project) return null
   const colors = project.palette.map(rgbToHex)
-  const save = (next: string[]) =>
-    void call(commands.setPalette, next.map(hexToRgb))
-      .then(() => refresh(projectKey))
-      .catch(() => undefined)
   const canAdd = current !== null && !colors.includes(current) && colors.length < PALETTE_LIMIT
   return (
     <div role='group' aria-label={t('colorPicker.palette')} className='mt-3 flex flex-wrap gap-1'>
@@ -172,7 +184,7 @@ function ProjectPalette({
           onClick={() => onPick(color)}
           onContextMenu={(event) => {
             event.preventDefault()
-            save(colors.filter((candidate) => candidate !== color))
+            editPalette((saved) => saved.filter((candidate) => candidate !== color))
           }}
         />
       ))}
@@ -182,7 +194,7 @@ function ProjectPalette({
           title={t('colorPicker.paletteAdd')}
           aria-label={t('colorPicker.paletteAdd')}
           className='grid size-5 place-items-center rounded-[3px] border border-dashed border-input text-muted-foreground hover:text-foreground'
-          onClick={() => save([...colors, current])}
+          onClick={() => editPalette((saved) => [...saved, current])}
         >
           <Plus className='size-3' />
         </button>

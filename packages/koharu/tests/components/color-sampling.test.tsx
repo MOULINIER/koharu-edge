@@ -86,23 +86,68 @@ describe('canvas color sampling', () => {
   it('saves, applies and removes project palette colors', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
-    const setPalette = vi.spyOn(commands, 'setPalette').mockResolvedValue(null)
-    openProject([[255, 0, 0]])
+    // The backend owns the palette: edits are applied to what it currently holds.
+    let stored: ProjectInfo['palette'] = [[255, 0, 0]]
+    vi.spyOn(commands, 'getProject').mockImplementation(async () => ({
+      name: 'Manga',
+      revision: 1,
+      active_page: null,
+      can_undo: false,
+      can_redo: false,
+      palette: stored,
+    }))
+    const setPalette = vi.spyOn(commands, 'setPalette').mockImplementation(async (colors) => {
+      stored = colors
+      return null
+    })
+    openProject(stored)
     render(<ColorWell value='#111111' onChange={onChange} />)
 
     await user.click(screen.getByRole('button', { name: 'Brush color' }))
     await user.click(screen.getByRole('button', { name: 'Save this color to the project' }))
-    expect(setPalette).toHaveBeenLastCalledWith([
-      [255, 0, 0],
-      [17, 17, 17],
-    ])
+    await waitFor(() =>
+      expect(setPalette).toHaveBeenLastCalledWith([
+        [255, 0, 0],
+        [17, 17, 17],
+      ]),
+    )
 
-    const saved = screen.getByRole('button', { name: '#FF0000 (right-click to remove)' })
+    const saved = await screen.findByRole('button', { name: '#FF0000 (right-click to remove)' })
     await user.click(saved)
     expect(onChange).toHaveBeenLastCalledWith('#FF0000')
 
     fireEvent.contextMenu(saved)
-    expect(setPalette).toHaveBeenLastCalledWith([])
+    await waitFor(() => expect(setPalette).toHaveBeenLastCalledWith([[17, 17, 17]]))
+  })
+
+  it('applies quick successive palette edits to each other instead of overwriting', async () => {
+    const user = userEvent.setup()
+    let stored: ProjectInfo['palette'] = [
+      [255, 0, 0],
+      [0, 0, 255],
+    ]
+    vi.spyOn(commands, 'getProject').mockImplementation(async () => ({
+      name: 'Manga',
+      revision: 1,
+      active_page: null,
+      can_undo: false,
+      can_redo: false,
+      palette: stored,
+    }))
+    const setPalette = vi.spyOn(commands, 'setPalette').mockImplementation(async (colors) => {
+      stored = colors
+      return null
+    })
+    // The rendered project never refreshes between the two edits.
+    openProject(stored)
+    render(<ColorWell value='#111111' onChange={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: 'Brush color' }))
+    fireEvent.contextMenu(screen.getByRole('button', { name: '#FF0000 (right-click to remove)' }))
+    fireEvent.contextMenu(screen.getByRole('button', { name: '#0000FF (right-click to remove)' }))
+
+    await waitFor(() => expect(setPalette).toHaveBeenCalledTimes(2))
+    expect(stored).toEqual([])
   })
 
   it('hides the palette without an open project', async () => {
