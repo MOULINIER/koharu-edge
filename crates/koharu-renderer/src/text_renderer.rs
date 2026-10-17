@@ -162,6 +162,27 @@ impl TextRenderer {
         } else {
             frame
         };
+        if descriptor.text.trim().is_empty() {
+            let empty = RenderBounds {
+                x: 0.0,
+                y: 0.0,
+                width: 0.0,
+                height: 0.0,
+            };
+            return Ok(RenderedTextNode {
+                scene: Arc::new(PreparedScene::default()),
+                resources: Arc::from([]),
+                local_bounds: empty,
+                metadata: RenderedTextMetadata {
+                    rendered_bounds: empty,
+                    layout_bounds: frame.into(),
+                    post_script_fonts: Vec::new(),
+                    font_size: descriptor.font_size.unwrap_or_default(),
+                    color: descriptor.foreground_color,
+                },
+                diagnostics: Vec::new(),
+            });
+        }
         if bounds.width <= 0.0 || bounds.height <= 0.0 {
             return Err(Error::invalid(format!(
                 "text inset leaves no layout area for entity {}",

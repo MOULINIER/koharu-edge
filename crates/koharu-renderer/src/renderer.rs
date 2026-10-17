@@ -730,11 +730,15 @@ impl Traversal<'_> {
             source: content,
             kind: RecognizedFrom::KIND.to_owned(),
         });
-        let Some(translation) = self.snapshot.component::<Translation>(content)? else {
-            return Ok(None);
+        let (text, language) = match self.snapshot.component::<Translation>(content)? {
+            Some(translation) => (translation.text.value, translation.language),
+            None => (String::new(), None),
         };
-        let text = translation.text.value;
-        if text.trim().is_empty() {
+        // A frame the user drew or moved keeps a layer without glyphs, so the editor
+        // can select and resize it before it has a translation. A detected block
+        // has no layer until translated: its balloon is not split into cells yet, so
+        // an empty layer would span the whole balloon.
+        if text.trim().is_empty() && layout.origin != Origin::User {
             return Ok(None);
         }
         let authored = self.snapshot.component::<Geometry>(entity)?;
@@ -797,7 +801,7 @@ impl Traversal<'_> {
         let descriptor = TextNodeDescriptor {
             entity,
             text: text.clone(),
-            language: translation.language.clone(),
+            language: language.clone(),
             width: frame.bounds.width,
             height: frame.bounds.height,
             balloon_contour,
@@ -833,7 +837,7 @@ impl Traversal<'_> {
             descriptor: NodeDescriptor::Text(Box::new(descriptor)),
             metadata: DraftMetadata::Text {
                 text,
-                language: translation.language,
+                language,
                 alignment,
                 writing_mode,
                 angle_degrees: frame.angle_degrees,
@@ -1841,7 +1845,16 @@ mod tests {
         let (page, content, text) = ids.unwrap();
         let renderer = Renderer::default();
         let compiled = renderer.compile(&snapshot, page).unwrap();
-        assert!(compiled.layers.iter().all(|layer| layer.entity != text));
+        let text_of = |layers: &[LayerDraft]| {
+            layers
+                .iter()
+                .find(|layer| layer.entity == text)
+                .map(|layer| match &layer.descriptor {
+                    NodeDescriptor::Text(descriptor) => descriptor.text.clone(),
+                    NodeDescriptor::Image(_) => panic!("text entity compiled as an image"),
+                })
+        };
+        assert_eq!(text_of(&compiled.layers).as_deref(), Some(""));
 
         let translation = snapshot
             .patch(|edit| {
@@ -1856,7 +1869,130 @@ mod tests {
             .unwrap();
         let commit = session.commit(translation).await.unwrap();
         let compiled = renderer.compile(&commit.snapshot, page).unwrap();
-        assert!(compiled.layers.iter().any(|layer| layer.entity == text));
+        assert_eq!(
+            text_of(&compiled.layers).as_deref(),
+            Some("visible translation")
+        );
+    }
+
+    #[tokio::test]
+    async fn untranslated_detected_text_has_no_layer() {
+        let mut session = Session::memory().await.unwrap();
+        let mut ids = None;
+        let add = |edit: &mut koharu_scene::Edit, page| {
+            let content = edit.add_text_content(page, At::End)?;
+            let layer = edit.add_text_layer(
+                page,
+                At::End,
+                content,
+                &SceneTextLayout {
+                    origin: Origin::User,
+                    kind: TextLayoutKind::Paragraph,
+                    angle_degrees: Some(0.0),
+                },
+            )?;
+            edit.set(layer, &Geometry::rectangle(10.0, 10.0, 80.0, 40.0))?;
+            Ok::<_, koharu_scene::Error>(layer)
+        };
+        let create = session
+            .snapshot()
+            .patch(|edit| {
+                let page = edit.add_page(PageDraft::new("page", 200.0, 120.0), At::End)?;
+                ids = Some((page, add(edit, page)?));
+                Ok(())
+            })
+            .unwrap();
+        let snapshot = session.commit(create).await.unwrap().snapshot;
+        let (page, drawn) = ids.unwrap();
+        // An edit made by a pipeline stamps its layers as generated.
+        let mut detection = snapshot.edit_as(Generation::new(
+            ProducerId::new("dev.koharu.pipeline.detection").unwrap(),
+        ));
+        let detected = add(&mut detection, page).unwrap();
+        let snapshot = session
+            .commit(detection.finish().unwrap())
+            .await
+            .unwrap()
+            .snapshot;
+        let compiled = Renderer::default().compile(&snapshot, page).unwrap();
+        let has = |entity| compiled.layers.iter().any(|layer| layer.entity == entity);
+        assert!(!has(detected));
+        assert!(has(drawn));
+    }
+
+    #[tokio::test]
+    async fn box_text_is_controlled_by_its_layout_frame() {
+        let mut session = Session::memory().await.unwrap();
+        let mut ids = None;
+        let create = session
+            .snapshot()
+            .patch(|edit| {
+                let page = edit.add_page(PageDraft::new("page", 300.0, 200.0), At::End)?;
+                let mut add = |frame: [f64; 4], translation: Option<&str>| {
+                    let content = edit.add_text_content(page, At::End)?;
+                    if let Some(text) = translation {
+                        edit.set(
+                            content,
+                            &SourceText {
+                                text: Authored::user("source".to_owned()),
+                                language: None,
+                            },
+                        )?;
+                        edit.set(
+                            content,
+                            &Translation {
+                                text: Authored::user(text.to_owned()),
+                                language: None,
+                            },
+                        )?;
+                    }
+                    let layer = edit.add_text_layer(
+                        page,
+                        At::End,
+                        content,
+                        &SceneTextLayout {
+                            origin: Origin::User,
+                            kind: TextLayoutKind::Paragraph,
+                            angle_degrees: Some(0.0),
+                        },
+                    )?;
+                    let [x, y, width, height] = frame;
+                    edit.set(layer, &Geometry::rectangle(x, y, width, height))?;
+                    // A fixed size keeps the glyphs much smaller than the box.
+                    edit.set(
+                        layer,
+                        &Typography {
+                            origin: Origin::User,
+                            preferred_font: None,
+                            font_weight: None,
+                            font_style: None,
+                            size: Some(10.0),
+                            auto_fit: false,
+                            color: None,
+                            stroke_color: None,
+                            stroke_width: None,
+                            alignment: None,
+                            writing_mode: None,
+                            extensions: BTreeMap::new(),
+                        },
+                    )?;
+                    Ok::<_, koharu_scene::Error>(layer)
+                };
+                let translated = add([20.0, 30.0, 160.0, 90.0], Some("Hi"))?;
+                let untranslated = add([200.0, 40.0, 60.0, 50.0], None)?;
+                ids = Some((page, translated, untranslated));
+                Ok(())
+            })
+            .unwrap();
+        let snapshot = session.commit(create).await.unwrap().snapshot;
+        let (page, translated, untranslated) = ids.unwrap();
+        let frame = Renderer::default().render(&snapshot, page).await.unwrap();
+        let control = |entity| {
+            let frame = frame.layer(entity).unwrap().element_frame().unwrap();
+            [frame.x, frame.y, frame.width, frame.height]
+        };
+        assert_eq!(control(translated), [20.0, 30.0, 160.0, 90.0]);
+        assert_eq!(control(untranslated), [200.0, 40.0, 60.0, 50.0]);
     }
 
     #[tokio::test]

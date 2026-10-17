@@ -11,7 +11,7 @@ use koharu_rasterizer::{
     Revision as PreparedRevision,
 };
 use koharu_scene::{BlobId, EntityId, Geometry, LanguageTag, RelationId, Revision};
-use vello::kurbo::Affine;
+use vello::kurbo::{Affine, Point};
 
 use crate::{Error, Result, TextAlign, WritingMode};
 
@@ -603,6 +603,25 @@ fn element_frame(layer: &Layer) -> Option<PreparedElementFrame> {
     let LayerKind::Text(text) = layer.kind() else {
         return None;
     };
+    // Box text is edited through the frame it lays out in, so resizing changes
+    // the box even when the glyphs keep their size or overflow it. Point text
+    // has no box and is edited through its glyphs.
+    if let NodeDescriptor::Text(descriptor) = &layer.0.node.descriptor
+        && !descriptor.point_text
+    {
+        let center = layer.placement()
+            * Point::new(
+                f64::from(descriptor.width) * 0.5,
+                f64::from(descriptor.height) * 0.5,
+            );
+        return Some(PreparedElementFrame {
+            x: center.x as f32 - descriptor.width * 0.5,
+            y: center.y as f32 - descriptor.height * 0.5,
+            width: descriptor.width,
+            height: descriptor.height,
+            angle_degrees: text.angle_degrees,
+        });
+    }
     let bounds = text.rendered_bounds;
     if bounds.width > 0.0 && bounds.height > 0.0 {
         return Some(PreparedElementFrame {
