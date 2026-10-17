@@ -87,6 +87,35 @@ export const defaultShortcuts: Shortcuts = {
   fit: '0',
 }
 
+// Shortcuts are a webview preference like the theme and UI language, so they
+// persist in the webview's storage rather than the native config.
+const shortcutsStorageKey = 'koharu-shortcuts'
+
+function loadShortcuts(): Shortcuts {
+  try {
+    const stored: unknown = JSON.parse(
+      globalThis.localStorage?.getItem(shortcutsStorageKey) ?? '{}',
+    )
+    if (!stored || typeof stored !== 'object') return defaultShortcuts
+    const shortcuts = { ...defaultShortcuts }
+    for (const action of Object.keys(defaultShortcuts) as ShortcutAction[]) {
+      const key = (stored as Record<string, unknown>)[action]
+      if (typeof key === 'string' && key.length <= 1) shortcuts[action] = key
+    }
+    return shortcuts
+  } catch {
+    return defaultShortcuts
+  }
+}
+
+function saveShortcuts(shortcuts: Shortcuts) {
+  try {
+    globalThis.localStorage?.setItem(shortcutsStorageKey, JSON.stringify(shortcuts))
+  } catch {
+    // Storage can be unavailable or full; the change still applies to this session.
+  }
+}
+
 export const useKoharuStore = create<KoharuStore>()((set) => ({
   initialized: false,
   preferences: null,
@@ -109,7 +138,7 @@ export const useKoharuStore = create<KoharuStore>()((set) => ({
   processingScope: 'selected-pages',
   processingStages: [...pipelineStages],
   settingsOpen: false,
-  shortcuts: defaultShortcuts,
+  shortcuts: loadShortcuts(),
   selectPages: (selectedPages) => set({ selectedPages: [...new Set(selectedPages)] }),
   showInspector: (inspector) => set({ inspector }),
   setProcessingScope: (processingScope) => set({ processingScope }),
@@ -119,9 +148,11 @@ export const useKoharuStore = create<KoharuStore>()((set) => ({
   setTool: (tool) => set({ tool }),
   setBrush: (brush) => set({ brush }),
   setShortcut: (action, key) =>
-    set((state) => ({
-      shortcuts: { ...state.shortcuts, [action]: key.toLowerCase().slice(0, 1) },
-    })),
+    set((state) => {
+      const shortcuts = { ...state.shortcuts, [action]: key.toLowerCase().slice(0, 1) }
+      saveShortcuts(shortcuts)
+      return { shortcuts }
+    }),
   requestCanvasFit: () => set((state) => ({ fitCanvasRequest: state.fitCanvasRequest + 1 })),
   dismissJob: (id) =>
     set((state) => {
