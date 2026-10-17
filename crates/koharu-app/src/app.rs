@@ -114,7 +114,7 @@ pub fn run(context: tauri::Context<CefRuntime>) -> Result<()> {
             application.manage(CurrentProject {
                 project: Mutex::new(None),
             });
-            application.manage(ProjectLibrary::new()?);
+            application.manage(ProjectLibrary::new());
             application.manage(Processing::default());
             application.manage(CanvasChannel::default());
             application.manage(JobChannel::default());

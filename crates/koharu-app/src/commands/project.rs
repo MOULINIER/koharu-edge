@@ -1,4 +1,8 @@
-use std::{collections::HashSet, io::Cursor, path::PathBuf};
+use std::{
+    collections::HashSet,
+    io::Cursor,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{Context as _, Result, anyhow, bail};
 use image::{DynamicImage, ImageFormat, RgbaImage};
@@ -180,22 +184,34 @@ pub(crate) struct CurrentProject {
 
 #[derive(Clone)]
 pub(crate) struct ProjectLibrary {
-    root: PathBuf,
+    root: Option<PathBuf>,
 }
 
 impl ProjectLibrary {
-    pub(crate) fn new() -> Result<Self> {
-        let root = dirs::document_dir()
-            .context("the Documents directory is unavailable")?
-            .join("Koharu");
-        std::fs::create_dir_all(&root)
+    // The library folder is created on first use rather than at startup: a
+    // Documents folder that can't be written (such as a stale OneDrive
+    // placeholder) must surface as an error in the project list, not stop the
+    // app from starting.
+    pub(crate) fn new() -> Self {
+        Self {
+            root: dirs::document_dir().map(|documents| documents.join("Koharu")),
+        }
+    }
+
+    fn root(&self) -> Result<&Path> {
+        let root = self
+            .root
+            .as_deref()
+            .context("the Documents directory is unavailable")?;
+        std::fs::create_dir_all(root)
             .with_context(|| format!("failed to create {}", root.display()))?;
-        Ok(Self { root })
+        Ok(root)
     }
 
     pub(crate) fn list(&self) -> Result<Vec<ProjectSummary>> {
-        let mut projects = std::fs::read_dir(&self.root)
-            .with_context(|| format!("failed to read {}", self.root.display()))?
+        let root = self.root()?;
+        let mut projects = std::fs::read_dir(root)
+            .with_context(|| format!("failed to read {}", root.display()))?
             .filter_map(|entry| entry.ok())
             .filter(|entry| entry.file_type().is_ok_and(|kind| kind.is_dir()))
             .filter_map(|entry| {
@@ -250,7 +266,7 @@ impl ProjectLibrary {
 
     fn resolve(&self, name: &str) -> Result<(String, PathBuf)> {
         let name = validate_project_name(name)?;
-        Ok((name.clone(), self.root.join(format!("{name}.khrproj"))))
+        Ok((name.clone(), self.root()?.join(format!("{name}.khrproj"))))
     }
 }
 
