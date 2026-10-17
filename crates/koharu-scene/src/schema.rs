@@ -106,10 +106,6 @@ pub(crate) fn validate_entity(state: &State, id: EntityId) -> Result<()> {
         Err(Error::invalid(format!(
             "entity {id} carries text content data but is not text content"
         )))
-    } else if has_translation && !has_source {
-        Err(Error::invalid(format!(
-            "entity {id} has a translation but no source text"
-        )))
     } else if has_text_group && !has_group {
         Err(Error::invalid(format!(
             "text group {id} does not carry the group component"

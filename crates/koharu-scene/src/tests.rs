@@ -994,11 +994,13 @@ async fn relations_are_records_with_typed_adjacency() {
 }
 
 #[tokio::test]
-async fn translation_requires_source_text() {
+async fn translation_does_not_require_source_text() {
+    // A user can type a translation into a frame they drew before any OCR, or
+    // clear the source of translated text.
     let session = Session::memory().await.unwrap();
     let result = session.snapshot().patch(|edit| {
         let page = edit.add_page(page(), At::End)?;
-        let entity = edit.add_entity(page, At::End)?;
+        let entity = edit.add_text_content(page, At::End)?;
         edit.set(
             entity,
             &Translation {
@@ -1007,7 +1009,7 @@ async fn translation_requires_source_text() {
             },
         )
     });
-    assert!(matches!(result, Err(Error::Invalid(_))));
+    assert!(result.is_ok());
 }
 
 #[tokio::test]
