@@ -100,6 +100,9 @@ impl StageProcessor for Processor {
         MODEL_NAME
     }
 
+    // A page counts as detected while a detected text region still backs a text
+    // block. Deleting a block leaves its region behind, so an orphaned region
+    // must not keep the page from being detected again.
     fn skip(&self, input: &StageInput) -> Result<bool> {
         for entity in input.scene.descendants(input.page)? {
             let id = entity.id();
@@ -107,6 +110,11 @@ impl StageProcessor for Processor {
                 && entity
                     .component::<Region>()?
                     .is_some_and(|region| region.kind == TextRegion::kind())
+                && input
+                    .scene
+                    .relations_to_as::<RecognizedFrom>(id)
+                    .next()
+                    .is_some()
             {
                 return Ok(true);
             }
@@ -1916,8 +1924,8 @@ mod tests {
     };
     use koharu_ml::koharu_layout_rfdetr_seg_2xl::{KoharuLayoutDetection, KoharuLayoutMask};
     use koharu_scene::{
-        At, BubbleRegion, FitsTo, FlowsIn, Geometry, Inside, Origin, PageDraft, Session,
-        TextLayout, TextLayoutKind, TextRegion, Typography, WritingMode,
+        At, BubbleRegion, FitsTo, FlowsIn, Geometry, Inside, Origin, PageDraft, RecognizedFrom,
+        RemovePolicy, Session, TextLayout, TextLayoutKind, TextRegion, Typography, WritingMode,
     };
 
     use super::{
@@ -1946,39 +1954,51 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn detection_skips_a_page_with_existing_text() {
+    async fn detection_skips_only_a_page_with_detected_text() {
         let mut session = Session::memory().await.unwrap();
-        let mut page = None;
+        let mut ids = None;
         let patch = session
             .snapshot()
             .patch(|edit| {
-                let id = edit.add_page(PageDraft::new("page", 100.0, 100.0), At::End)?;
-                edit.add_analysis_region::<TextRegion>(
-                    id,
+                let page = edit.add_page(PageDraft::new("page", 100.0, 100.0), At::End)?;
+                let region = edit.add_analysis_region::<TextRegion>(
+                    page,
                     At::End,
                     &Geometry::rectangle(10.0, 10.0, 20.0, 20.0),
                     None,
                 )?;
-                page = Some(id);
+                let content = edit.add_text_content(page, At::End)?;
+                edit.relate::<RecognizedFrom>(content, region)?;
+                ids = Some((page, content));
                 Ok(())
             })
             .unwrap();
         let snapshot = session.commit(patch).await.unwrap().snapshot;
-        let page = page.unwrap();
-        let input = StageInput::new(
-            snapshot,
-            page,
-            None,
-            None,
-            std::sync::Arc::new(crate::ImageCache::default()),
-            None,
-        );
+        let (page, content) = ids.unwrap();
         let processor = Processor::new(
             DetectionModel::KoharuLayoutRFDetrSeg2XL(KoharuLayoutRFDetrSeg2XLConfig::default()),
             koharu_ml::Device::cpu(),
         );
+        let input = |snapshot| {
+            StageInput::new(
+                snapshot,
+                page,
+                None,
+                None,
+                std::sync::Arc::new(crate::ImageCache::default()),
+                None,
+            )
+        };
 
-        assert!(processor.skip(&input).unwrap());
+        assert!(processor.skip(&input(snapshot.clone())).unwrap());
+
+        // Deleting the text block leaves its region behind.
+        let patch = snapshot
+            .patch(|edit| edit.remove_entity(content, RemovePolicy::Cascade))
+            .unwrap();
+        let snapshot = session.commit(patch).await.unwrap().snapshot;
+
+        assert!(!processor.skip(&input(snapshot)).unwrap());
     }
 
     #[tokio::test]
