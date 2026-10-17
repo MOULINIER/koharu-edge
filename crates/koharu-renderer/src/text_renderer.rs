@@ -157,8 +157,9 @@ impl TextRenderer {
             width: descriptor.width,
             height: descriptor.height,
         };
+        let text_inset = fitted_inset(frame, descriptor.text_inset);
         let bounds = if is_bubble_text {
-            inset(frame, descriptor.text_inset)
+            inset(frame, text_inset)
         } else {
             frame
         };
@@ -231,13 +232,13 @@ impl TextRenderer {
                 .with_max_height(bounds.height);
         }
         if let Some(contour) = &descriptor.balloon_contour {
-            let [top, _, _, left] = descriptor.text_inset;
+            let [top, _, _, left] = text_inset;
             let contour = contour.iter().map(|&(x, y)| (x - left, y - top)).collect();
             layout = layout.with_comic_balloon(
                 bounds.width,
                 bounds.height,
                 contour,
-                descriptor.text_inset.into_iter().fold(0.0, f32::max),
+                text_inset.into_iter().fold(0.0, f32::max),
             );
         }
         if let Some(language) = &descriptor.language {
@@ -361,6 +362,20 @@ fn is_chinese_or_japanese_language(language: &str) -> bool {
         .split(['-', '_'])
         .next()
         .is_some_and(|primary| matches!(primary.to_ascii_lowercase().as_str(), "ja" | "zh"))
+}
+
+// Automatic balloon flows can split a balloon into cells narrower than the fixed
+// inset. Each side keeps at most a quarter of its axis so a cell always leaves
+// half of itself for layout instead of failing the whole page.
+fn fitted_inset(rect: LayoutBox, [top, right, bottom, left]: [f32; 4]) -> [f32; 4] {
+    let horizontal = rect.width * 0.25;
+    let vertical = rect.height * 0.25;
+    [
+        top.min(vertical),
+        right.min(horizontal),
+        bottom.min(vertical),
+        left.min(horizontal),
+    ]
 }
 
 fn inset(rect: LayoutBox, [top, right, bottom, left]: [f32; 4]) -> LayoutBox {
@@ -500,6 +515,19 @@ mod tests {
 
         assert_eq!(automatic_maximum(&descriptor, bounds, false), 24.0);
         assert_eq!(automatic_maximum(&descriptor, bounds, true), 240.0);
+    }
+
+    #[test]
+    fn narrow_balloon_cells_keep_a_layout_area() {
+        let cell = LayoutBox {
+            x: 0.0,
+            y: 0.0,
+            width: 7.0,
+            height: 43.0,
+        };
+        let bounds = inset(cell, fitted_inset(cell, [4.0; 4]));
+        assert_eq!((bounds.x, bounds.width), (1.75, 3.5));
+        assert_eq!((bounds.y, bounds.height), (4.0, 35.0));
     }
 
     #[test]
