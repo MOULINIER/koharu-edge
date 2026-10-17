@@ -310,6 +310,12 @@ impl Layer {
     pub fn element_frame(&self) -> Option<PreparedElementFrame> {
         element_frame(self)
     }
+
+    /// Text laid out from a point, without a box to fit.
+    #[must_use]
+    pub fn is_point_text(&self) -> bool {
+        matches!(&self.0.node.descriptor, NodeDescriptor::Text(descriptor) if descriptor.point_text)
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]

@@ -36,6 +36,15 @@ pub struct TransformFrame {
     pub frame: Frame,
 }
 
+/// A committed canvas transform of one text layer.
+pub struct GeometryTransform {
+    pub element: EntityId,
+    pub geometry: Geometry,
+    pub angle_degrees: f32,
+    /// Point text was resized and now lays out in `geometry` as a box.
+    pub boxed: bool,
+}
+
 #[derive(Clone, Debug, Serialize, Type)]
 pub struct CanvasState {
     pub page: Option<EntityId>,
@@ -236,7 +245,7 @@ impl Desktop {
         &self,
         expected_revision: Revision,
         elements: &[TransformFrame],
-    ) -> Result<Vec<(EntityId, Geometry, f32)>> {
+    ) -> Result<Vec<GeometryTransform>> {
         let presentation = self.presentation.read();
         let rendered = presentation
             .frame
@@ -283,20 +292,35 @@ impl Desktop {
                 height: original.height,
                 angle_degrees: original.angle_degrees,
             };
-            let coefficients = frame_transform(original, element.frame);
-            let geometry = Geometry {
-                origin: layer.geometry().origin.clone(),
-                points: layer
+            // Point text has no box: its control frame is its glyphs, and its geometry
+            // only anchors the layout. Resizing it makes the dragged frame its box.
+            let boxed = layer.is_point_text()
+                && ((element.frame.width - original.width).abs() > f32::EPSILON
+                    || (element.frame.height - original.height).abs() > f32::EPSILON);
+            let points = if boxed {
+                frame_corners(element.frame)
+            } else {
+                let coefficients = frame_transform(original, element.frame);
+                layer
                     .geometry()
                     .points
                     .iter()
                     .map(|point| transform_point(coefficients, point))
-                    .collect(),
+                    .collect()
+            };
+            let geometry = Geometry {
+                origin: layer.geometry().origin.clone(),
+                points,
             };
             if geometry != *layer.geometry()
                 || element.frame.angle_degrees != original.angle_degrees
             {
-                geometries.push((element.element, geometry, element.frame.angle_degrees));
+                geometries.push(GeometryTransform {
+                    element: element.element,
+                    geometry,
+                    angle_degrees: element.frame.angle_degrees,
+                    boxed,
+                });
             }
         }
         Ok(geometries)
@@ -536,6 +560,25 @@ fn frame_transform(original: Frame, preview: Frame) -> [f64; 6] {
     ]
 }
 
+// Corners in the order `Geometry::rectangle` uses: top edge first, then clockwise.
+fn frame_corners(frame: Frame) -> Vec<Point> {
+    let (sin, cos) = f64::from(frame.angle_degrees).to_radians().sin_cos();
+    let center_x = f64::from(frame.x + frame.width * 0.5);
+    let center_y = f64::from(frame.y + frame.height * 0.5);
+    let half_width = f64::from(frame.width) * 0.5;
+    let half_height = f64::from(frame.height) * 0.5;
+    [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)]
+        .into_iter()
+        .map(|(x, y)| {
+            let (x, y) = (x * half_width, y * half_height);
+            Point {
+                x: center_x + x * cos - y * sin,
+                y: center_y + x * sin + y * cos,
+            }
+        })
+        .collect()
+}
+
 fn transform_point([a, b, c, d, e, f]: [f64; 6], point: &Point) -> Point {
     Point {
         x: a * point.x + c * point.y + e,
@@ -549,7 +592,24 @@ mod tests {
 
     use tokio::{sync::Notify, time::timeout};
 
-    use super::Desktop;
+    use koharu_scene::Geometry;
+
+    use super::{Desktop, Frame, frame_corners};
+
+    #[test]
+    fn frame_corners_match_the_rectangle_geometry() {
+        let frame = Frame {
+            x: 10.0,
+            y: 20.0,
+            width: 30.0,
+            height: 40.0,
+            angle_degrees: 0.0,
+        };
+        assert_eq!(
+            frame_corners(frame),
+            Geometry::rectangle(10.0, 20.0, 30.0, 40.0).points
+        );
+    }
 
     #[tokio::test]
     async fn newer_request_preempts_current_preparation_and_acquires_ownership() {

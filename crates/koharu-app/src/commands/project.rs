@@ -6,7 +6,7 @@ use std::{
 
 use anyhow::{Context as _, Result, anyhow, bail};
 use image::{DynamicImage, ImageFormat, RgbaImage};
-use koharu_desktop::Frame;
+use koharu_desktop::{Frame, GeometryTransform};
 use koharu_scene::{
     AssetInput, AssetMetadata, AssetRole, At, Authored, Commit, EntityId, EntityOrigin,
     Geometry as SceneGeometry, Group as SceneGroup, Origin, PageDraft, Palette,
@@ -758,19 +758,23 @@ impl Project {
 
     pub(crate) async fn set_geometries(
         &mut self,
-        geometries: impl IntoIterator<Item = (EntityId, SceneGeometry, f32)>,
+        geometries: impl IntoIterator<Item = GeometryTransform>,
     ) -> Result<Commit> {
         let snapshot = self.snapshot();
         let geometries = geometries
             .into_iter()
-            .map(|(element, geometry, angle_degrees)| {
+            .map(|transform| {
+                let element = transform.element;
                 let mut layout = snapshot
                     .component::<SceneTextLayout>(element)?
                     .context("only text layers can change geometry")?;
                 layout.origin = Origin::User;
-                layout.angle_degrees = Some(angle_degrees);
+                layout.angle_degrees = Some(transform.angle_degrees);
+                if transform.boxed {
+                    layout.kind = TextLayoutKind::Paragraph;
+                }
                 let content = Self::text_content(&snapshot, element)?;
-                Ok((element, geometry, content, layout))
+                Ok((element, transform.geometry, content, layout))
             })
             .collect::<Result<Vec<_>>>()?;
         let patch = snapshot.patch(|edit| {
