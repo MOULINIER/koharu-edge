@@ -41,6 +41,9 @@ pub(crate) struct TextNodeDescriptor {
     pub(crate) word_spacing: f32,
     pub(crate) text_inset: [f32; 4],
     pub(crate) point_text: bool,
+    /// The user drew or resized the frame, so automatic sizing fills it instead of
+    /// keeping the free-text default.
+    pub(crate) sized_by_user: bool,
 }
 
 pub(crate) struct RenderedTextNode {
@@ -346,7 +349,8 @@ fn automatic_maximum(
     bounds: LayoutBox,
     is_bubble_text: bool,
 ) -> f32 {
-    if is_bubble_text {
+    let fills_frame = descriptor.sized_by_user && descriptor.auto_fit && !descriptor.point_text;
+    if is_bubble_text || fills_frame {
         if descriptor.writing_mode.is_vertical() {
             bounds.height
         } else {
@@ -505,6 +509,7 @@ mod tests {
             word_spacing: 0.0,
             text_inset: [0.0; 4],
             point_text: false,
+            sized_by_user: false,
         };
         let bounds = LayoutBox {
             x: 0.0,
@@ -515,6 +520,13 @@ mod tests {
 
         assert_eq!(automatic_maximum(&descriptor, bounds, false), 24.0);
         assert_eq!(automatic_maximum(&descriptor, bounds, true), 240.0);
+
+        // A box the user drew or resized is filled; point text keeps the default.
+        let mut resized = descriptor.clone();
+        resized.sized_by_user = true;
+        assert_eq!(automatic_maximum(&resized, bounds, false), 240.0);
+        resized.point_text = true;
+        assert_eq!(automatic_maximum(&resized, bounds, false), 24.0);
     }
 
     #[test]

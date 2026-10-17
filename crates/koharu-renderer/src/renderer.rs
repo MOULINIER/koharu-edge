@@ -750,7 +750,7 @@ impl Traversal<'_> {
         } else {
             self.fit(entity, dependencies)?
         };
-        let (geometry, frame, balloon_contour) = if let Some(geometry) = authored {
+        let (geometry, frame, balloon_contour, sized_by_user) = if let Some(geometry) = authored {
             let Some(frame) = geometry_frame(&geometry, layout.angle_degrees) else {
                 return Ok(None);
             };
@@ -758,7 +758,13 @@ impl Traversal<'_> {
                 .as_ref()
                 .and_then(|placement| placement.balloon_contour.as_ref())
                 .map(|_| contour(&geometry, frame));
-            (geometry, frame, balloon)
+            // A drawn box, or one resized away from its detected placement. Moving or
+            // rotating keeps the placement's size and so keeps the automatic size.
+            let sized_by_user = placement.as_ref().is_none_or(|placement| {
+                (placement.frame.bounds.width - frame.bounds.width).abs() > 0.5
+                    || (placement.frame.bounds.height - frame.bounds.height).abs() > 0.5
+            });
+            (geometry, frame, balloon, sized_by_user)
         } else {
             let Some(placement) = placement else {
                 return Ok(None);
@@ -767,6 +773,7 @@ impl Traversal<'_> {
                 placement.geometry,
                 placement.frame,
                 placement.balloon_contour,
+                false,
             )
         };
         let typography = self.snapshot.component::<Typography>(entity)?;
@@ -827,6 +834,7 @@ impl Traversal<'_> {
             word_spacing: 0.0,
             text_inset: [4.0; 4],
             point_text: !is_bubble && layout.kind == TextLayoutKind::Point,
+            sized_by_user,
         };
         Ok(Some(LayerDraft {
             entity,
@@ -1918,6 +1926,67 @@ mod tests {
         let has = |entity| compiled.layers.iter().any(|layer| layer.entity == entity);
         assert!(!has(detected));
         assert!(has(drawn));
+    }
+
+    #[tokio::test]
+    async fn automatic_size_follows_a_drawn_frame() {
+        let mut sizes = Vec::new();
+        for (width, height) in [(40.0, 20.0), (120.0, 60.0), (400.0, 200.0)] {
+            let mut session = Session::memory().await.unwrap();
+            let mut ids = None;
+            let create = session
+                .snapshot()
+                .patch(|edit| {
+                    let page = edit.add_page(PageDraft::new("page", 500.0, 300.0), At::End)?;
+                    let content = edit.add_text_content(page, At::End)?;
+                    edit.set(
+                        content,
+                        &Translation {
+                            text: Authored::user("Hello".to_owned()),
+                            language: None,
+                        },
+                    )?;
+                    let layer = edit.add_text_layer(
+                        page,
+                        At::End,
+                        content,
+                        &SceneTextLayout {
+                            origin: Origin::User,
+                            kind: TextLayoutKind::Paragraph,
+                            angle_degrees: Some(0.0),
+                        },
+                    )?;
+                    edit.set(layer, &Geometry::rectangle(10.0, 10.0, width, height))?;
+                    edit.set(
+                        layer,
+                        &Typography {
+                            origin: Origin::User,
+                            preferred_font: None,
+                            font_weight: None,
+                            font_style: None,
+                            size: None,
+                            auto_fit: true,
+                            color: None,
+                            stroke_color: None,
+                            stroke_width: None,
+                            alignment: None,
+                            writing_mode: None,
+                            extensions: BTreeMap::new(),
+                        },
+                    )?;
+                    ids = Some((page, layer));
+                    Ok(())
+                })
+                .unwrap();
+            let snapshot = session.commit(create).await.unwrap().snapshot;
+            let (page, layer) = ids.unwrap();
+            let frame = Renderer::default().render(&snapshot, page).await.unwrap();
+            let LayerKind::Text(text) = frame.layer(layer).unwrap().kind() else {
+                panic!("text layer");
+            };
+            sizes.push(text.font_size);
+        }
+        assert!(sizes[0] < sizes[1] && sizes[1] < sizes[2], "{sizes:?}");
     }
 
     #[tokio::test]
