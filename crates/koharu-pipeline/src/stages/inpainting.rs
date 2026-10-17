@@ -19,7 +19,7 @@ use koharu_ml::{
 };
 use koharu_scene::{
     AssetInput, AssetMetadata, AssetRole, At, BubbleRegion, EntityOrigin, Geometry, Origin,
-    RasterLayer, RasterLayerKind, Region, RegionSpec,
+    RasterLayer, RasterLayerKind, RecognizedFrom, Region, RegionSpec, TextRegion,
 };
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -417,6 +417,92 @@ fn flat_fill_regions(input: &StageInput, width: u32, height: u32) -> Result<Vec<
     Ok(regions)
 }
 
+// Deleting a text block removes its layer and content but leaves the detected
+// region and the page's text mask. Mask components that touch only such
+// orphaned regions belong to text the user chose to keep, so they are not
+// cleaned. Components that also touch a live region, or no region at all, stay.
+fn release_deleted_text(input: &StageInput, mask: &mut GrayImage) -> Result<()> {
+    let (width, height) = mask.dimensions();
+    let mut live = Vec::new();
+    let mut orphaned = Vec::new();
+    for entity in input.scene.descendants(input.page)? {
+        let id = entity.id();
+        if !entity
+            .component::<Region>()?
+            .is_some_and(|region| region.kind == TextRegion::kind())
+        {
+            continue;
+        }
+        let Some(geometry) = entity.component::<Geometry>()? else {
+            continue;
+        };
+        let Some(bounds) = pixel_bounds(&geometry, width, height) else {
+            continue;
+        };
+        if input
+            .scene
+            .relations_to_as::<RecognizedFrom>(id)
+            .next()
+            .is_some()
+        {
+            live.push(bounds);
+        } else {
+            orphaned.push(bounds);
+        }
+    }
+    if orphaned.is_empty() {
+        return Ok(());
+    }
+    let labels = connected_components(&*mask, Connectivity::Eight, Luma([0]));
+    let touches = |regions: &[[u32; 4]]| {
+        let mut touched = Vec::<bool>::new();
+        for &[left, top, right, bottom] in regions {
+            for y in top..bottom {
+                for x in left..right {
+                    let label = labels.get_pixel(x, y)[0] as usize;
+                    if label == 0 {
+                        continue;
+                    }
+                    if label >= touched.len() {
+                        touched.resize(label + 1, false);
+                    }
+                    touched[label] = true;
+                }
+            }
+        }
+        touched
+    };
+    let deleted = touches(&orphaned);
+    let kept = touches(&live);
+    for (x, y, pixel) in mask.enumerate_pixels_mut() {
+        let label = labels.get_pixel(x, y)[0] as usize;
+        if deleted.get(label).copied().unwrap_or(false)
+            && !kept.get(label).copied().unwrap_or(false)
+        {
+            *pixel = Luma([0]);
+        }
+    }
+    Ok(())
+}
+
+fn pixel_bounds(geometry: &Geometry, width: u32, height: u32) -> Option<[u32; 4]> {
+    let (mut left, mut top) = (f64::INFINITY, f64::INFINITY);
+    let (mut right, mut bottom) = (f64::NEG_INFINITY, f64::NEG_INFINITY);
+    for point in &geometry.points {
+        left = left.min(point.x);
+        top = top.min(point.y);
+        right = right.max(point.x);
+        bottom = bottom.max(point.y);
+    }
+    let bounds = [
+        left.floor().clamp(0.0, f64::from(width)) as u32,
+        top.floor().clamp(0.0, f64::from(height)) as u32,
+        right.ceil().clamp(0.0, f64::from(width)) as u32,
+        bottom.ceil().clamp(0.0, f64::from(height)) as u32,
+    ];
+    (bounds[2] > bounds[0] && bounds[3] > bounds[1]).then_some(bounds)
+}
+
 struct InpaintInput {
     image: Arc<DynamicImage>,
     original: Arc<DynamicImage>,
@@ -479,9 +565,12 @@ async fn prepare(input: &StageInput) -> Result<InpaintInput> {
     } else {
         for role in ["text-mask", "coo-mask"] {
             if let Some(image) = input.images.get(&input.scene, page, role).await? {
-                let layer = image.to_luma8();
+                let mut layer = image.to_luma8();
                 if layer.dimensions() != mask.dimensions() {
                     bail!("{role} dimensions do not match page {page}");
+                }
+                if role == "text-mask" {
+                    release_deleted_text(input, &mut layer)?;
                 }
                 for (target, source) in mask.iter_mut().zip(layer.as_raw()) {
                     *target = (*target).max(*source);
@@ -893,6 +982,58 @@ fn composite_generated(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn deleted_text_blocks_are_not_cleaned() {
+        let mut session = koharu_scene::Session::memory().await.unwrap();
+        let mut page = None;
+        let patch = session
+            .snapshot()
+            .patch(|edit| {
+                let id = edit.add_page(
+                    koharu_scene::PageDraft::new("page", 40.0, 10.0),
+                    koharu_scene::At::End,
+                )?;
+                // The first region still backs a text block; the second lost its
+                // block when the user deleted it.
+                for (x, live) in [(0.0, true), (20.0, false)] {
+                    let region = edit.add_analysis_region::<TextRegion>(
+                        id,
+                        koharu_scene::At::End,
+                        &Geometry::rectangle(x, 0.0, 10.0, 10.0),
+                        None,
+                    )?;
+                    if live {
+                        let content = edit.add_text_content(id, koharu_scene::At::End)?;
+                        edit.relate::<RecognizedFrom>(content, region)?;
+                    }
+                }
+                page = Some(id);
+                Ok(())
+            })
+            .unwrap();
+        let snapshot = session.commit(patch).await.unwrap().snapshot;
+        let input = StageInput::new(
+            snapshot,
+            page.unwrap(),
+            None,
+            None,
+            Arc::new(crate::ImageCache::default()),
+            None,
+        );
+        // Glyph masks are dilated past their region; the third blob has no region.
+        let mut mask = GrayImage::new(40, 10);
+        for x in (2..12).chain(18..28).chain(34..38) {
+            mask.put_pixel(x, 5, Luma([255]));
+        }
+
+        release_deleted_text(&input, &mut mask).unwrap();
+
+        assert_eq!(mask.get_pixel(11, 5), &Luma([255]));
+        assert_eq!(mask.get_pixel(18, 5), &Luma([0]));
+        assert_eq!(mask.get_pixel(25, 5), &Luma([0]));
+        assert_eq!(mask.get_pixel(35, 5), &Luma([255]));
+    }
 
     #[tokio::test]
     async fn transient_inpainting_mask_replaces_persistent_page_masks() {
