@@ -263,6 +263,13 @@
     "processPages": "處理所選頁面",
     "processProject": "處理專案",
     "redo": "重做",
+    "resetAllPages": "重設所有頁面…",
+    "resetAllTitle": "要重設所有頁面嗎？",
+    "resetConfirm": "重設",
+    "resetDescription": "所有文字、清理、筆刷筆觸和遮罩都會被移除，只保留匯入的圖片。可使用復原還原。",
+    "resetDontAskAgain": "不再詢問",
+    "resetPages": "重設所選頁面…",
+    "resetSelectedTitle": "要重設所選頁面嗎？",
     "runPhase": "執行{{phase}}",
     "selectAllLayers": "選取所有圖層",
     "settings": "設定",
@@ -304,6 +311,7 @@
     "rename": "重新命名",
     "renameDescription": "為此頁面選擇新名稱。",
     "renameTitle": "重新命名頁面",
+    "reset": "重設",
     "selected": "已選擇 {{count}}"
   },
   "outputPicker": {

@@ -1,7 +1,7 @@
 'use client'
 
 import { openUrl } from '@tauri-apps/plugin-opener'
-import { FilePlus2, FolderOpen, LoaderCircle, Settings } from 'lucide-react'
+import { FilePlus2, FolderOpen, LoaderCircle, RotateCcw, Settings } from 'lucide-react'
 import Image from 'next/image'
 import { useState, type ComponentProps } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -24,6 +24,18 @@ import {
 import { useKoharuStore } from '@/lib/store'
 import { commands, type Operation, type Scope, type Stage } from '@koharu/bridge/protocol'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@koharu/ui/components/alert-dialog'
+import { Checkbox } from '@koharu/ui/components/checkbox'
+import {
   Menubar,
   MenubarContent as UiMenubarContent,
   MenubarItem as UiMenubarItem,
@@ -37,9 +49,31 @@ import {
 } from '@koharu/ui/components/menubar'
 import { cn } from '@koharu/ui/lib/utils'
 
+// A webview preference like the shortcuts, so it persists in the webview's
+// storage rather than the native config.
+const skipResetAllConfirmKey = 'koharu-skip-reset-all-confirm'
+
+function skipsResetAllConfirm() {
+  try {
+    return globalThis.localStorage?.getItem(skipResetAllConfirmKey) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function skipResetAllConfirm() {
+  try {
+    globalThis.localStorage?.setItem(skipResetAllConfirmKey, 'true')
+  } catch {
+    // Storage can be unavailable or full; the dialog then keeps asking.
+  }
+}
+
 export function TitleBar() {
   const { t } = useTranslation()
   const [aboutOpen, setAboutOpen] = useState(false)
+  const [reset, setReset] = useState<{ pages: string[]; all: boolean } | null>(null)
+  const [dontAskAgain, setDontAskAgain] = useState(false)
   const macOS = useMacOS()
   const project = useProject().data
   const pagesQuery = usePages(Boolean(project))
@@ -62,6 +96,16 @@ export function TitleBar() {
     void call(commands.process, scope, operation).catch(() => undefined)
 
   const closeProject = () => void call(commands.closeProject).catch(() => undefined)
+
+  const resetPages = (pages: string[]) => {
+    setReset(null)
+    void call(commands.resetPages, pages)
+      .then(() => {
+        selectLayers([])
+        return refresh(projectKey, pagesKey, pageKey)
+      })
+      .catch(() => undefined)
+  }
 
   return (
     <>
@@ -188,6 +232,27 @@ export function TitleBar() {
                 {t('menu.delete')}
                 <MenubarShortcut>Del</MenubarShortcut>
               </MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem
+                disabled={selectedPages.length === 0}
+                onClick={() => setReset({ pages: selectedPages, all: false })}
+              >
+                {t('menu.resetPages')}
+              </MenubarItem>
+              <MenubarItem
+                disabled={!project || pages.length === 0}
+                onClick={() => {
+                  const all = pages.map((item) => item.id)
+                  if (skipsResetAllConfirm()) {
+                    resetPages(all)
+                  } else {
+                    setDontAskAgain(false)
+                    setReset({ pages: all, all: true })
+                  }
+                }}
+              >
+                {t('menu.resetAllPages')}
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
 
@@ -282,6 +347,43 @@ export function TitleBar() {
         {!macOS && <WindowControls />}
       </header>
       <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
+      <AlertDialog
+        open={reset !== null}
+        onOpenChange={(open) => {
+          if (!open) setReset(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia className='bg-destructive/10 text-destructive'>
+              <RotateCcw className='size-5' />
+            </AlertDialogMedia>
+            <AlertDialogTitle>
+              {reset?.all ? t('menu.resetAllTitle') : t('menu.resetSelectedTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>{t('menu.resetDescription')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          {reset?.all && (
+            <label className='flex items-center gap-2 text-xs'>
+              <Checkbox checked={dontAskAgain} onCheckedChange={setDontAskAgain} />
+              {t('menu.resetDontAskAgain')}
+            </label>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              variant='destructive'
+              onClick={() => {
+                if (!reset) return
+                if (reset.all && dontAskAgain) skipResetAllConfirm()
+                resetPages(reset.pages)
+              }}
+            >
+              {t('menu.resetConfirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

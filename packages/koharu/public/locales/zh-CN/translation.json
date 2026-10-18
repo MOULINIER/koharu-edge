@@ -263,6 +263,13 @@
     "processPages": "处理所选页面",
     "processProject": "处理项目",
     "redo": "重做",
+    "resetAllPages": "重置所有页面…",
+    "resetAllTitle": "重置所有页面？",
+    "resetConfirm": "重置",
+    "resetDescription": "所有文本、清理、画笔笔触和遮罩都会被移除，仅保留导入的图像。可使用撤销恢复。",
+    "resetDontAskAgain": "不再询问",
+    "resetPages": "重置所选页面…",
+    "resetSelectedTitle": "重置所选页面？",
     "runPhase": "运行{{phase}}",
     "selectAllLayers": "选择所有图层",
     "settings": "设置",
@@ -304,6 +311,7 @@
     "rename": "重命名",
     "renameDescription": "为此页面选择一个新名称。",
     "renameTitle": "重命名页面",
+    "reset": "重置",
     "selected": "已选择 {{count}}"
   },
   "outputPicker": {

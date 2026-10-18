@@ -48,6 +48,7 @@ export const commands = {
 	renamePage: (page: EntityId, label: string) => __TAURI_INVOKE<null>("rename_page", { page, label }),
 	setPalette: (colors: ([number, number, number])[]) => __TAURI_INVOKE<null>("set_palette", { colors }),
 	deletePages: (pages: EntityId[]) => __TAURI_INVOKE<null>("delete_pages", { pages }),
+	resetPages: (pages: EntityId[]) => __TAURI_INVOKE<null>("reset_pages", { pages }),
 	movePage: (page: EntityId, index: number) => __TAURI_INVOKE<null>("move_page", { page, index }),
 	setSourceText: (layer: EntityId, text: string) => __TAURI_INVOKE<null>("set_source_text", { layer, text }),
 	setTranslation: (layer: EntityId, text: string | null) => __TAURI_INVOKE<null>("set_translation", { layer, text }),

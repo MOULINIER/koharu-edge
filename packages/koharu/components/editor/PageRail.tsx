@@ -7,6 +7,7 @@ import {
   FolderOpen,
   LoaderCircle,
   MoreHorizontal,
+  RotateCcw,
   Search,
   Settings,
   Trash2,
@@ -205,6 +206,14 @@ export function PageRail() {
       })
       .catch(() => undefined)
 
+  const resetPage = (page: string) =>
+    void call(commands.resetPages, [page])
+      .then(() => {
+        if (active === page) selectLayers([])
+        return refresh(projectKey, pagesKey, pageKey)
+      })
+      .catch(() => undefined)
+
   const openRename = (page: PageSummary) => {
     setRenaming(page)
     setRenameValue(page.label)
@@ -308,6 +317,7 @@ export function PageRail() {
                       onDragStart={() => setDragged(page.id)}
                       onDragEnd={() => setDragged(null)}
                       onRename={() => openRename(page)}
+                      onReset={() => resetPage(page.id)}
                       onDelete={() => deletePage(page.id)}
                       onDrop={() => {
                         if (dragged && dragged !== page.id) {
@@ -451,6 +461,7 @@ function PageItem({
   onDragStart,
   onDragEnd,
   onRename,
+  onReset,
   onDelete,
   onDrop,
 }: {
@@ -463,6 +474,7 @@ function PageItem({
   onDragStart: () => void
   onDragEnd: () => void
   onRename: () => void
+  onReset: () => void
   onDelete: () => void
   onDrop: () => void
 }) {
@@ -522,6 +534,9 @@ function PageItem({
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
               <DropdownMenuItem onClick={onRename}>{t('navigator.rename')}</DropdownMenuItem>
+              <DropdownMenuItem onClick={onReset}>
+                <RotateCcw /> {t('navigator.reset')}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem variant='destructive' onClick={onDelete}>
                 <Trash2 /> {t('navigator.delete')}

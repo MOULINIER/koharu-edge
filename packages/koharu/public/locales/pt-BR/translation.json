@@ -263,6 +263,13 @@
     "processPages": "Processar páginas selecionadas",
     "processProject": "Processar projeto",
     "redo": "Refazer",
+    "resetAllPages": "Redefinir todas as páginas…",
+    "resetAllTitle": "Redefinir todas as páginas?",
+    "resetConfirm": "Redefinir",
+    "resetDescription": "Todo o texto, limpeza, pinceladas e máscaras são removidos. Apenas as imagens importadas são mantidas. Use Desfazer para recuperá-los.",
+    "resetDontAskAgain": "Não perguntar novamente",
+    "resetPages": "Redefinir páginas selecionadas…",
+    "resetSelectedTitle": "Redefinir as páginas selecionadas?",
     "runPhase": "Executar {{phase}}",
     "selectAllLayers": "Selecionar todas as camadas",
     "settings": "Configurações",
@@ -304,6 +311,7 @@
     "rename": "Renomear",
     "renameDescription": "Escolha um novo nome para esta página.",
     "renameTitle": "Renomear página",
+    "reset": "Redefinir",
     "selected": "{{count}} selecionadas"
   },
   "outputPicker": {

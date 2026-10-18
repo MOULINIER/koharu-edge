@@ -263,6 +263,13 @@
     "processPages": "Seçili Sayfaları İşle",
     "processProject": "Projeyi İşle",
     "redo": "Yinele",
+    "resetAllPages": "Tüm Sayfaları Sıfırla…",
+    "resetAllTitle": "Tüm sayfalar sıfırlansın mı?",
+    "resetConfirm": "Sıfırla",
+    "resetDescription": "Tüm metinler, temizleme, fırça darbeleri ve maskeler kaldırılır. Yalnızca içe aktarılan görüntüler kalır. Geri getirmek için Geri Al kullanın.",
+    "resetDontAskAgain": "Bir daha sorma",
+    "resetPages": "Seçili Sayfaları Sıfırla…",
+    "resetSelectedTitle": "Seçili sayfalar sıfırlansın mı?",
     "runPhase": "{{phase}} çalıştır",
     "selectAllLayers": "Tüm Katmanları Seç",
     "settings": "Ayarlar",
@@ -304,6 +311,7 @@
     "rename": "Yeniden adlandır",
     "renameDescription": "Bu sayfa için yeni bir ad seçin.",
     "renameTitle": "Sayfayı yeniden adlandır",
+    "reset": "Sıfırla",
     "selected": "{{count}} seçili"
   },
   "outputPicker": {

@@ -132,6 +132,13 @@ impl Snapshot {
             .and_then(|assets| assets.values.get(role).cloned()))
     }
 
+    pub fn asset_roles(&self, entity: EntityId) -> Result<Vec<AssetRole>> {
+        Ok(self
+            .component::<Assets>(entity)?
+            .map(|assets| assets.values.into_keys().collect())
+            .unwrap_or_default())
+    }
+
     fn relation_component<T: Component>(&self, relation: RelationId) -> Result<Option<T>> {
         let key = key::<T>()?;
         self.decode(self.state.relation_component(relation, &key)?)

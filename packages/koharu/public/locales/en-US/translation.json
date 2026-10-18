@@ -263,6 +263,13 @@
     "processPages": "Process Selected Pages",
     "processProject": "Process Project",
     "redo": "Redo",
+    "resetAllPages": "Reset All Pages…",
+    "resetAllTitle": "Reset all pages?",
+    "resetConfirm": "Reset",
+    "resetDescription": "All text, cleanup, brush strokes and masks are removed. Only the imported images are kept. Use Undo to bring them back.",
+    "resetDontAskAgain": "Do not ask again",
+    "resetPages": "Reset Selected Pages…",
+    "resetSelectedTitle": "Reset the selected pages?",
     "runPhase": "Run {{phase}}",
     "selectAllLayers": "Select All Layers",
     "settings": "Settings",
@@ -304,6 +311,7 @@
     "rename": "Rename",
     "renameDescription": "Choose a new name for this page.",
     "renameTitle": "Rename page",
+    "reset": "Reset",
     "selected": "{{count}} selected"
   },
   "outputPicker": {

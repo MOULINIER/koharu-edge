@@ -421,6 +421,44 @@ impl Project {
         self.commit(patch).await
     }
 
+    /// Returns pages to their imported state: only the source image is kept.
+    pub(crate) async fn reset_pages(&mut self, pages: Vec<EntityId>) -> Result<Commit> {
+        let snapshot = self.snapshot();
+        let source = AssetRole::new("source")?;
+        let pages = pages.into_iter().collect::<HashSet<_>>();
+        let patch = snapshot.patch(|edit| {
+            for page in pages {
+                snapshot.page(page)?;
+                for child in snapshot.children(page)? {
+                    if snapshot.component::<SceneTextGroup>(child)?.is_none() {
+                        edit.remove_entity(child, RemovePolicy::Cascade)?;
+                        continue;
+                    }
+                    // The page text group is structural and cannot be removed; the
+                    // pipeline reuses it, so empty it and undo its visibility edits.
+                    for layer in snapshot.children(child)? {
+                        edit.remove_entity(layer, RemovePolicy::Cascade)?;
+                    }
+                    edit.set(
+                        child,
+                        &SceneVisibility {
+                            origin: Origin::User,
+                            visible: true,
+                            opacity: 1.0,
+                        },
+                    )?;
+                }
+                for role in snapshot.asset_roles(page)? {
+                    if role != source {
+                        edit.remove_asset(page, &role)?;
+                    }
+                }
+            }
+            Ok(())
+        })?;
+        self.commit(patch).await
+    }
+
     pub(crate) async fn move_page(&mut self, page: EntityId, index: usize) -> Result<Commit> {
         let snapshot = self.snapshot();
         let siblings = snapshot.pages().map(|page| page.id()).collect::<Vec<_>>();
@@ -1511,6 +1549,97 @@ mod tests {
                 .label,
             "latest manual"
         );
+    }
+
+    #[tokio::test]
+    async fn reset_keeps_only_the_source_image() {
+        let mut session = Session::memory().await.unwrap();
+        let asset = || {
+            AssetInput::new(
+                std::sync::Arc::<[u8]>::from([0]),
+                "image/png",
+                AssetMetadata {
+                    width: Some(1),
+                    height: Some(1),
+                    attributes: Default::default(),
+                },
+            )
+        };
+        let mut setup = session.snapshot().edit();
+        let mut pages = Vec::new();
+        for label in ["reset", "kept"] {
+            let page = setup
+                .add_page(PageDraft::new(label, 100.0, 100.0), At::End)
+                .unwrap();
+            setup
+                .set_asset(page, &AssetRole::new("source").unwrap(), asset())
+                .unwrap();
+            setup
+                .set_asset(page, &AssetRole::new("text-mask").unwrap(), asset())
+                .unwrap();
+            let cleanup = setup.add_entity(page, At::Start).unwrap();
+            setup
+                .set(
+                    cleanup,
+                    &SceneRasterLayer {
+                        origin: Origin::User,
+                        name: "Cleanup".to_owned(),
+                        kind: RasterLayerKind::Cleanup,
+                    },
+                )
+                .unwrap();
+            pages.push(page);
+        }
+        session.commit(setup.finish().unwrap()).await.unwrap();
+        let mut project = Project::new(session, "test".to_owned());
+        let frame = Frame {
+            x: 10.0,
+            y: 10.0,
+            width: 40.0,
+            height: 20.0,
+            angle_degrees: 0.0,
+        };
+        for page in &pages {
+            project.add_text_box(*page, frame).await.unwrap();
+        }
+        let group = project
+            .snapshot()
+            .children(pages[0])
+            .unwrap()
+            .find(|child| {
+                project
+                    .snapshot()
+                    .component::<SceneTextGroup>(*child)
+                    .unwrap()
+                    .is_some()
+            })
+            .unwrap();
+        project
+            .set_visibility(vec![group], Some(false), None)
+            .await
+            .unwrap();
+
+        project.reset_pages(vec![pages[0]]).await.unwrap();
+
+        let snapshot = project.snapshot();
+        assert_eq!(
+            snapshot.asset_roles(pages[0]).unwrap(),
+            [AssetRole::new("source").unwrap()]
+        );
+        assert_eq!(
+            snapshot.children(pages[0]).unwrap().collect::<Vec<_>>(),
+            [group]
+        );
+        assert_eq!(snapshot.children(group).unwrap().count(), 0);
+        assert!(
+            snapshot
+                .component::<SceneVisibility>(group)
+                .unwrap()
+                .unwrap()
+                .visible
+        );
+        assert_eq!(snapshot.asset_roles(pages[1]).unwrap().len(), 2);
+        assert_eq!(Project::pages(&snapshot).unwrap()[1].layer_count, 3);
     }
 
     #[test]

@@ -263,6 +263,13 @@
     "processPages": "選択ページを処理",
     "processProject": "プロジェクトを処理",
     "redo": "やり直す",
+    "resetAllPages": "すべてのページをリセット…",
+    "resetAllTitle": "すべてのページをリセットしますか？",
+    "resetConfirm": "リセット",
+    "resetDescription": "テキスト、クリーンアップ、ブラシのストローク、マスクがすべて削除され、読み込んだ画像だけが残ります。元に戻すで復元できます。",
+    "resetDontAskAgain": "今後は確認しない",
+    "resetPages": "選択ページをリセット…",
+    "resetSelectedTitle": "選択したページをリセットしますか？",
     "runPhase": "{{phase}}を実行",
     "selectAllLayers": "すべてのレイヤーを選択",
     "settings": "設定",
@@ -304,6 +311,7 @@
     "rename": "名前を変更",
     "renameDescription": "このページの新しい名前を入力します。",
     "renameTitle": "ページ名を変更",
+    "reset": "リセット",
     "selected": "{{count}}件選択中"
   },
   "outputPicker": {

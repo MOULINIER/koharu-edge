@@ -36,6 +36,7 @@ Koharu Edge tracks upstream Koharu's `main` branch and adds the changes below. M
 - **Drag-and-drop layers:** reorder layers, or move them into groups, by dragging them in the layers panel. ([#959](https://github.com/koharu-rs/koharu/pull/959))
 - **OCR a single text frame:** each text layer has an OCR button, which also works on frames you drew yourself. Clearing a frame's source text lets OCR fill it again. ([#1065](https://github.com/koharu-rs/koharu/pull/1065))
 - **Consistent translations across pages:** **Settings → Translation → Context from previous pages** sends the translations of earlier pages along with each request, so names, terms and tone stay consistent. Off by default. (Part of [#1014](https://github.com/koharu-rs/koharu/pull/1014))
+- **Reset pages:** return a page to its imported image without re-importing it. Use **Reset** in a page's menu, or **Edit → Reset Selected Pages** / **Reset All Pages**. Text, cleanup, brush strokes and masks are removed, and **Undo** brings them back.
 
 Koharu Edge installs as a separate app, with its own name and an "EDGE" badge on its icon, so it can sit next to upstream Koharu. Both share the same settings, downloaded models, API keys and projects.
 

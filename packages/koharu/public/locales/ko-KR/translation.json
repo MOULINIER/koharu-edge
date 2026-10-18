@@ -263,6 +263,13 @@
     "processPages": "선택한 페이지 처리",
     "processProject": "프로젝트 처리",
     "redo": "다시 실행",
+    "resetAllPages": "모든 페이지 초기화…",
+    "resetAllTitle": "모든 페이지를 초기화할까요?",
+    "resetConfirm": "초기화",
+    "resetDescription": "모든 텍스트, 정리, 브러시 획, 마스크가 삭제되고 가져온 이미지만 남습니다. 실행 취소로 되돌릴 수 있습니다.",
+    "resetDontAskAgain": "다시 묻지 않기",
+    "resetPages": "선택한 페이지 초기화…",
+    "resetSelectedTitle": "선택한 페이지를 초기화할까요?",
     "runPhase": "{{phase}} 실행",
     "selectAllLayers": "모든 레이어 선택",
     "settings": "설정",
@@ -304,6 +311,7 @@
     "rename": "이름 바꾸기",
     "renameDescription": "이 페이지의 새 이름을 정하세요.",
     "renameTitle": "페이지 이름 바꾸기",
+    "reset": "초기화",
     "selected": "{{count}}개 선택됨"
   },
   "outputPicker": {
